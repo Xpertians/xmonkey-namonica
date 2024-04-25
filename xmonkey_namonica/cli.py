@@ -13,8 +13,8 @@ def main():
         default=None
     )
     parser.add_argument(
-        "--simple", action="store_true",
-        help="Print a simple list of copyrights and licenses"
+        "--full", action="store_true",
+        help="Print a full list of copyrights and license files"
     )
     args = parser.parse_args()
     if "npm" in args.purl:
@@ -27,18 +27,18 @@ def main():
     licenses = list(set(license_files))
     copyhits = [entry['line'] for entry in result['copyrights']]
     copyrights = list(set(copyhits))
-    if args.simple:
+    if args.full:
+        print(json.dumps(result, indent=4))
+    else:
         print("\n".join(copyrights))
         print("\nLicense Content:\n" + "\n".join(licenses))
-    else:
-        print(json.dumps(result, indent=4))
     if args.export:
         with open(args.export, "w") as f:
-            if args.simple:
+            if args.full:
+                f.write(json.dumps(result, indent=4))
+            else:
                 f.write("\n".join(copyrights))
                 f.write("\nLicense Content:\n" + "\n".join(licenses))
-            else:
-                f.write(json.dumps(result, indent=4))
 
 
 if __name__ == "__main__":
