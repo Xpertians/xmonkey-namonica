@@ -42,16 +42,15 @@ class NpmHandler(BaseHandler):
         files = PackageManager.scan_for_files(
             self.temp_dir, ['.txt', '.md', 'LICENSE']
         )
-        license_files = PackageManager.serialize_output(files)
-        results['license_files'] = license_files
+        results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
-        copyrights = PackageManager.serialize_output(copyhits)
-        results['copyrights'] = copyrights
-        return results
+        results['copyrights'] = copyhits
+        self.results = results
+
 
     def generate_report(self):
         print("Generating report based on the scanned data...")
-        return {"status": "Report generated"}
+        return self.results
 
     def construct_download_url(self):
         namespace = (
