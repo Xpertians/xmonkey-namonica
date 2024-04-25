@@ -3,6 +3,7 @@ import os
 import shutil
 from ..common import PackageManager
 
+
 class BaseHandler(ABC):
     def __init__(self, purl):
         self.purl_details = PackageManager.parse_purl(purl)

@@ -5,6 +5,7 @@ from urllib.parse import unquote, urlparse, parse_qs
 from .utils import download_file, temp_directory, extract_zip, extract_tar
 from urllib.parse import urlparse, parse_qs, unquote
 
+
 class PackageManager:
     @staticmethod
     def parse_purl(purl):
@@ -14,7 +15,9 @@ class PackageManager:
             raise ValueError("Invalid PURL scheme")
         path_parts = url.path.strip('/').split('/')
         if len(path_parts) < 3:
-            raise ValueError("Invalid PURL format. Expected at least pkg:type/name@version")
+            raise ValueError(
+                "Invalid PURL format. Expected at least pkg:type/name@version"
+            )
         result['type'] = path_parts[1]
         name_with_version = path_parts[-1]
         if len(path_parts) == 4:
@@ -50,10 +53,16 @@ class PackageManager:
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
             for file in files:
-                if any(re.match(pattern, file, re.IGNORECASE) for pattern in patterns):
+                if any(
+                    re.match(pattern, file, re.IGNORECASE)
+                    for pattern in patterns
+                ):
                     file_path = os.path.join(root, file)
                     file_text = PackageManager.read_file_content(file_path)
-                    found_files.append({"file": file_path, "content": file_text})
+                    found_files.append({
+                        "file": file_path,
+                        "content": file_text
+                    })
         return found_files
 
     @staticmethod
@@ -75,7 +84,10 @@ class PackageManager:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         for line in f:
                             if "copyright" in line.lower():
-                                copyrights.append({"file": file_path, "line": line.strip()})
+                                copyrights.append({
+                                    "file": file_path,
+                                    "line": line.strip()
+                                })
                 except UnicodeDecodeError:
                     continue
         return copyrights
