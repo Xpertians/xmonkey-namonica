@@ -47,7 +47,6 @@ class NpmHandler(BaseHandler):
         results['copyrights'] = copyhits
         self.results = results
 
-
     def generate_report(self):
         print("Generating report based on the scanned data...")
         return self.results
