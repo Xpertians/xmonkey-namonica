@@ -14,7 +14,7 @@ class PackageManager:
         if url.scheme != 'pkg':
             raise ValueError("Invalid PURL scheme")
         path_parts = url.path.strip('/').split('/')
-        if len(path_parts) < 3:
+        if len(path_parts) < 2:
             raise ValueError(
                 "Invalid PURL format. Expected at least pkg:type/name@version"
             )
@@ -77,16 +77,21 @@ class PackageManager:
     @staticmethod
     def scan_for_copyright(temp_dir):
         copyrights = []
+        pattern = "[^0-9<>,.()@a-zA-Z\s]+"
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 file_path = os.path.join(root, file)
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         for line in f:
-                            if "copyright" in line.lower():
+                            if "copyright" in line.lower() and any(
+                                char.isdigit() for char in line.lower()
+                            ):
+                                copyhit = line.strip()
+                                copyhit = re.sub(pattern, "", line.strip())
                                 copyrights.append({
                                     "file": file_path,
-                                    "line": line.strip()
+                                    "line": copyhit.strip()
                                 })
                 except UnicodeDecodeError:
                     continue

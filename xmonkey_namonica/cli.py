@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from .handlers.npm_handler import NpmHandler
+from .handlers.cargo_handler import CargoHandler
 
 
 def main():
@@ -19,6 +20,8 @@ def main():
     args = parser.parse_args()
     if "npm" in args.purl:
         handler = NpmHandler(args.purl)
+    elif "cargo" in args.purl:
+        handler = CargoHandler(args.purl)
     else:
         raise ValueError("Unsupported package type")
     handler.fetch()
