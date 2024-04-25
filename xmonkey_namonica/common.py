@@ -77,7 +77,7 @@ class PackageManager:
     @staticmethod
     def scan_for_copyright(temp_dir):
         copyrights = []
-        pattern = "[^0-9<>,.()@a-zA-Z\s]+"
+        pattern = "[^0-9<>,.()@a-zA-Z-\s]+"
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 file_path = os.path.join(root, file)

@@ -3,6 +3,7 @@ import json
 import os
 from .handlers.npm_handler import NpmHandler
 from .handlers.cargo_handler import CargoHandler
+from .handlers.pypi_handler import PypiHandler
 
 
 def main():
@@ -22,6 +23,8 @@ def main():
         handler = NpmHandler(args.purl)
     elif "cargo" in args.purl:
         handler = CargoHandler(args.purl)
+    elif "pypi" in args.purl:
+        handler = PypiHandler(args.purl)
     else:
         raise ValueError("Unsupported package type")
     handler.fetch()
