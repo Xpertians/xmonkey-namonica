@@ -1,0 +1,1 @@
+curl https://registry.npmjs.org/$1/ | jq '.versions[."dist-tags".latest].dist.tarball'

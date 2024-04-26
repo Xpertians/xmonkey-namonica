@@ -1,8 +1,8 @@
-from ..utils import download_file, temp_directory, extract_tar
-from ..utils import download_file, temp_directory, extract_tar
+import os
+import logging
 from .base_handler import BaseHandler
 from ..common import PackageManager, temp_directory
-import os
+from ..utils import download_file, temp_directory, extract_tar
 
 
 class NpmHandler(BaseHandler):
@@ -18,7 +18,7 @@ class NpmHandler(BaseHandler):
                 filename
             )
             download_file(download_url, package_file_path)
-            print(f"Downloaded NPM package to {package_file_path}")
+            logging.info(f"Downloaded package to {package_file_path}")
             self.temp_dir = temp_dir
             self.unpack()
             self.scan()
@@ -34,13 +34,13 @@ class NpmHandler(BaseHandler):
                 filename
             )
             extract_tar(package_file_path, self.temp_dir)
-            print(f"Unpacked NPM package in {self.temp_dir}")
+            logging.info(f"Unpacked package in {self.temp_dir}")
 
     def scan(self):
         results = {}
-        print("Scanning package contents...")
+        logging.info("Scanning package contents...")
         files = PackageManager.scan_for_files(
-            self.temp_dir, ['.txt', '.md', 'LICENSE']
+            self.temp_dir, ['COPYRIGHT', 'NOTICES', 'LICENSE']
         )
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
@@ -48,16 +48,17 @@ class NpmHandler(BaseHandler):
         self.results = results
 
     def generate_report(self):
-        print("Generating report based on the scanned data...")
+        logging.info("Generating report based on the scanned data...")
         return self.results
 
     def construct_download_url(self):
         namespace = (
-            self.purl_details['namespace'].replace('%40', '@')
+            self.purl_details['namespace'].replace('%40', '@') + '/' + self.purl_details['name']
             if self.purl_details['namespace']
             else self.purl_details['name']
         )
         return (
-            f"https://registry.npmjs.org/{namespace}/-/"
+            f"https://registry.npmjs.org/"
+            f"{namespace}/-/"
             f"{self.purl_details['name']}-{self.purl_details['version']}.tgz"
         )

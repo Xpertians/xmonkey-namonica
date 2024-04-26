@@ -1,8 +1,8 @@
+import os
 import requests
 import logging
 import zipfile
 import tarfile
-import os
 import tempfile
 import shutil
 from contextlib import contextmanager

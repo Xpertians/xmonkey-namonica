@@ -18,10 +18,10 @@ class PackageManager:
             raise ValueError(
                 "Invalid PURL format. Expected at least pkg:type/name@version"
             )
-        result['type'] = path_parts[1]
+        result['type'] = path_parts[0]
         name_with_version = path_parts[-1]
-        if len(path_parts) == 4:
-            result['namespace'] = unquote(path_parts[2])
+        if len(path_parts) == 3:
+            result['namespace'] = unquote(path_parts[1])
         else:
             result['namespace'] = None
         name_version = name_with_version.split('@', 1)
@@ -84,9 +84,8 @@ class PackageManager:
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         for line in f:
-                            if "copyright" in line.lower() and any(
-                                char.isdigit() for char in line.lower()
-                            ):
+                            if ("copyright" in line.lower() and
+                                    len(line) <= 50):
                                 copyhit = line.strip()
                                 copyhit = re.sub(pattern, "", line.strip())
                                 copyrights.append({

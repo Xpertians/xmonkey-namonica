@@ -1,8 +1,8 @@
-from ..utils import download_file, temp_directory, extract_tar
-from ..utils import download_file, temp_directory, extract_tar
+import os
+import logging
 from .base_handler import BaseHandler
 from ..common import PackageManager, temp_directory
-import os
+from ..utils import download_file, temp_directory, extract_tar
 
 
 class PypiHandler(BaseHandler):
@@ -18,7 +18,7 @@ class PypiHandler(BaseHandler):
                 filename
             )
             download_file(download_url, package_file_path)
-            print(f"Downloaded Python package to {package_file_path}")
+            logging.info(f"Downloaded package to {package_file_path}")
             self.temp_dir = temp_dir
             self.unpack()
             self.scan()
@@ -34,11 +34,11 @@ class PypiHandler(BaseHandler):
                 filename
             )
             extract_tar(package_file_path, self.temp_dir)
-            print(f"Unpacked Python package in {self.temp_dir}")
+            logging.info(f"Unpacked package in {self.temp_dir}")
 
     def scan(self):
         results = {}
-        print("Scanning package contents...")
+        logging.info("Scanning package contents...")
         files = PackageManager.scan_for_files(
             self.temp_dir, ['COPYRIGHT', 'NOTICES', 'LICENSE']
         )
@@ -48,7 +48,7 @@ class PypiHandler(BaseHandler):
         self.results = results
 
     def generate_report(self):
-        print("Generating report based on the scanned data...")
+        logging.info("Generating report based on the scanned data...")
         return self.results
 
     def construct_download_url(self):
