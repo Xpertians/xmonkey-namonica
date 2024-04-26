@@ -1,9 +1,9 @@
 import os
-import json
 import re
+import json
 from urllib.parse import unquote, urlparse, parse_qs
-from .utils import download_file, temp_directory, extract_zip, extract_tar
 from urllib.parse import urlparse, parse_qs, unquote
+from .utils import download_file, temp_directory, extract_zip, extract_tar
 
 
 class PackageManager:
