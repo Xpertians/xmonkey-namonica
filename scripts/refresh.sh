@@ -5,3 +5,4 @@ rm -rf dist/* build/*
 python3 setup.py sdist bdist_wheel > scripts/build.log
 pip3 install dist/xmonkey_namonica-*-py3-none-any.whl --force-reinstall > scripts/install.log
 # pandoc --from=markdown --to=rst --output=README README.md >> scripts/install.log
+# python3 -m twine upload --repository pypi dist/*
