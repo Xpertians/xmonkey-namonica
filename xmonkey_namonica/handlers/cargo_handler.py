@@ -18,7 +18,7 @@ class CargoHandler(BaseHandler):
                 filename
             )
             download_file(download_url, package_file_path)
-            logging.info(f"Unpacked package in {self.temp_dir}")
+            logging.info(f"Downloaded package in {self.temp_dir}")
             self.temp_dir = temp_dir
             self.unpack()
             self.scan()
@@ -34,7 +34,7 @@ class CargoHandler(BaseHandler):
                 filename
             )
             extract_tar(package_file_path, self.temp_dir)
-            logging.info(f"Unpacked NUGET package in {self.temp_dir}")
+            logging.info(f"Unpacked package in {self.temp_dir}")
 
     def scan(self):
         results = {}
