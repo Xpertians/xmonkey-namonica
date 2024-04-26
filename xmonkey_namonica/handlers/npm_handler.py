@@ -53,7 +53,8 @@ class NpmHandler(BaseHandler):
 
     def construct_download_url(self):
         namespace = (
-            self.purl_details['namespace'].replace('%40', '@') + '/' + self.purl_details['name']
+            self.purl_details['namespace'].replace('%40', '@') + '/' +
+            self.purl_details['name']
             if self.purl_details['namespace']
             else self.purl_details['name']
         )
