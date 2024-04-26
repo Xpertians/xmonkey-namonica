@@ -4,6 +4,7 @@ import os
 from .handlers.npm_handler import NpmHandler
 from .handlers.cargo_handler import CargoHandler
 from .handlers.pypi_handler import PypiHandler
+from .handlers.nuget_handler import NugetHandler
 
 
 def main():
@@ -25,6 +26,8 @@ def main():
         handler = CargoHandler(args.purl)
     elif "pypi" in args.purl:
         handler = PypiHandler(args.purl)
+    elif "nuget" in args.purl:
+        handler = NugetHandler(args.purl)
     else:
         raise ValueError("Unsupported package type")
     handler.fetch()

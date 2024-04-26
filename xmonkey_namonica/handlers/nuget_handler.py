@@ -1,24 +1,24 @@
-from ..utils import download_file, temp_directory, extract_tar
-from ..utils import download_file, temp_directory, extract_tar
+from ..utils import download_file, temp_directory, extract_zip
+from ..utils import download_file, temp_directory, extract_zip
 from .base_handler import BaseHandler
 from ..common import PackageManager, temp_directory
 import os
 
 
-class PypiHandler(BaseHandler):
+class NugetHandler(BaseHandler):
     def fetch(self):
         download_url = self.construct_download_url()
         with temp_directory() as temp_dir:
             filename = (
                 f"{self.purl_details['name']}-"
-                f"{self.purl_details['version']}.tgz"
+                f"{self.purl_details['version']}.zip"
             )
             package_file_path = os.path.join(
                 temp_dir,
                 filename
             )
             download_file(download_url, package_file_path)
-            print(f"Downloaded Python package to {package_file_path}")
+            print(f"Downloaded NUGET package to {package_file_path}")
             self.temp_dir = temp_dir
             self.unpack()
             self.scan()
@@ -27,14 +27,14 @@ class PypiHandler(BaseHandler):
         if self.temp_dir:
             filename = (
                 f"{self.purl_details['name']}-"
-                f"{self.purl_details['version']}.tgz"
+                f"{self.purl_details['version']}.zip"
             )
             package_file_path = os.path.join(
                 self.temp_dir,
                 filename
             )
-            extract_tar(package_file_path, self.temp_dir)
-            print(f"Unpacked Python package in {self.temp_dir}")
+            extract_zip(package_file_path, self.temp_dir)
+            print(f"Unpacked NUGET package in {self.temp_dir}")
 
     def scan(self):
         results = {}
@@ -57,9 +57,8 @@ class PypiHandler(BaseHandler):
             if self.purl_details['namespace']
             else self.purl_details['name']
         )
-        iniName = namespace[0].lower()
         return (
-            f"https://pypi.python.org/packages/source/{iniName}/{namespace}/"
-            f"{self.purl_details['name']}-"
-            f"{self.purl_details['version']}.tar.gz"
+            f"https://www.nuget.org/api/v2/package/"
+            f"{self.purl_details['name']}/"
+            f"{self.purl_details['version']}"
         )

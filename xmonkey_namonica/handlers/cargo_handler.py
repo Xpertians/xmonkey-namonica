@@ -18,7 +18,7 @@ class CargoHandler(BaseHandler):
                 filename
             )
             download_file(download_url, package_file_path)
-            print(f"Downloaded NPM package to {package_file_path}")
+            print(f"Downloaded RUST package to {package_file_path}")
             self.temp_dir = temp_dir
             self.unpack()
             self.scan()
@@ -34,7 +34,7 @@ class CargoHandler(BaseHandler):
                 filename
             )
             extract_tar(package_file_path, self.temp_dir)
-            print(f"Unpacked NPM package in {self.temp_dir}")
+            print(f"Unpacked RUST package in {self.temp_dir}")
 
     def scan(self):
         results = {}
