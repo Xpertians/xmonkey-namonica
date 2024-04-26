@@ -40,14 +40,16 @@ def main():
         print(json.dumps(result, indent=4))
     else:
         print("\n".join(copyrights))
-        print("\nLicense Content:\n" + "\n".join(licenses))
+        if licenses:
+            print("\nLicense Content:\n" + "\n".join(licenses))
     if args.export:
         with open(args.export, "w") as f:
             if args.full:
                 f.write(json.dumps(result, indent=4))
             else:
                 f.write("\n".join(copyrights))
-                f.write("\nLicense Content:\n" + "\n".join(licenses))
+                if licenses:
+                    f.write("\nLicense Content:\n" + "\n".join(licenses))
 
 
 if __name__ == "__main__":
