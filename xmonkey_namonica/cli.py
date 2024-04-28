@@ -6,6 +6,7 @@ from .handlers.cargo_handler import CargoHandler
 from .handlers.pypi_handler import PypiHandler
 from .handlers.nuget_handler import NugetHandler
 from .handlers.gen_handler import GenericHandler
+from .handlers.github_handler import GithubHandler
 
 
 def main():
@@ -21,18 +22,20 @@ def main():
         help="Print a full list of copyrights and license files"
     )
     args = parser.parse_args()
-    if "npm" in args.purl:
+    if "pkg:npm" in args.purl:
         handler = NpmHandler(args.purl)
-    elif "cargo" in args.purl:
+    elif "pkg:cargo" in args.purl:
         handler = CargoHandler(args.purl)
-    elif "pypi" in args.purl:
+    elif "pkg:pypi" in args.purl:
         handler = PypiHandler(args.purl)
-    elif "nuget" in args.purl:
+    elif "pkg:nuget" in args.purl:
         handler = NugetHandler(args.purl)
-    elif "generic" in args.purl:
+    elif "pkg:generic" in args.purl:
         handler = GenericHandler(args.purl)
+    elif "pkg:github" in args.purl:
+        handler = GithubHandler(args.purl)
     else:
-        raise ValueError("Unsupported package type")
+        raise ValueError("Unsupported PURL type")
     handler.fetch()
     result = handler.generate_report()
     license_files = [entry['content'] for entry in result['license_files']]
