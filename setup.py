@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='xmonkey_namonica',
-    version='0.1.3',
+    version='0.1.4',
     packages=find_packages(),
     entry_points={
         'console_scripts': [
@@ -10,6 +10,7 @@ setup(
         ]
     },
     install_requires=[
-        # Dependencies such as 'requests', etc.
+        "requests",
+        "urllib3",
     ],
 )
