@@ -24,75 +24,28 @@ Sample Maven purl is provided below:
 xmonkey-namonica "pkg:maven/commons-fileupload/commons-fileupload@1.2.2?type=jar"
 ```
 
-npm
-For npm component identifiers, the following coordinates are supported:
+### npm
+Sample npm purl is provided below:
 
-packageId
+```
+xmonkey-namonica "pkg:npm/grunt-bower-submodule@0.2.3"
+```
 
-version
+### nuget
+Sample NuGet purl is provided below:
 
-Sample JSON for a npm component identifier is provided below:
+```
+xmonkey-namonica "pkg:nuget/Nirvana.MongoProvider@1.0.53"
+```
 
-"componentIdentifier": {
-  "format": "npm",
-  "coordinates": {
-    "packageId": "grunt-bower-submodule",
-    "version": "0.2.3"
-  }
-}
-Sample JSON for annpm purl is provided below:
+### PyPI
+Sample PyPI purl is provided below:
 
-"packageUrl": "pkg:npm/grunt-bower-submodule@0.2.3"
-nuget
-For Nuget component identifiers, the following coordinates are supported:
+```
+xmonkey-namonica "pkg:pypi/jaraco.logging@1.5?extension=whl&qualifier=py2.py3-none-any"
+```
 
-packageId
 
-version
-
-Sample JSON for a NuGet component identifier is provided below:
-
-"componentIdentifier": {
-  "format": "nuget",
-  "coordinates": {
-    "packageId": "Nirvana.MongoProvider",
-    "version": "1.0.53"
-  }
-}
-Sample JSON for a NuGet purl is provided below:
-
-"packageUrl": "pkg:nuget/Nirvana.MongoProvider@1.0.53"
-PyPI
-Sonatype Data Services requires including the extension parameter to provide more precise results as to the package used. This requirement deviates from the pURL specifications.
-
-Querying whl files requires the environment qualifier as each environment returns different artifacts with different vulnerabilities.
-
-Tarballs (tar.gz): do not have a qualifier as they are platform-independent and may be compiled on any platform supporting Python
-
-Wheel (whl): platform-specific and requires a qualifier
-
-For PyPI component identifiers, the following coordinates are supported:
-
-name
-
-version
-
-extension [ whl | tar.gz ]
-
-qualifier [whl: required | tar.gz: not required]
-
-Sample JSON for a PyPI component identifier is provided below:
-
-"componentIdentifier": {
-  "format": "pypi",
-  "coordinates": {
-    "name": "jaraco.logging",
-    "version": "1.5"
-  }
-}
-Sample JSON for a PyPI purl is provided below:
-
-"packageUrl": "pkg:pypi/jaraco.logging@1.5?extension=whl&qualifier=py2.py3-none-any"
 rpm
 For rpm component identifiers, the following coordinates are supported:
 
