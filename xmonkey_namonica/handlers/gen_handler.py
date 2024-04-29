@@ -95,9 +95,11 @@ class GenericHandler(BaseHandler):
                 commit = None
             subprocess.run(
                 ["git", "clone", repo_url, self.temp_dir],
-                check=True
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
             )
-            print(f"Repository cloned successfully to {self.temp_dir}")
+            logging.info(f"Repository cloned successfully to {self.temp_dir}")
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone repository: {e}")
             shutil.rmtree(self.temp_dir)
