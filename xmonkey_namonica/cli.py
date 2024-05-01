@@ -7,6 +7,7 @@ from .handlers.pypi_handler import PypiHandler
 from .handlers.nuget_handler import NugetHandler
 from .handlers.gen_handler import GenericHandler
 from .handlers.github_handler import GithubHandler
+from .handlers.golang_handler import GolangHandler
 
 
 def main():
@@ -30,6 +31,8 @@ def main():
         handler = PypiHandler(args.purl)
     elif "pkg:nuget" in args.purl:
         handler = NugetHandler(args.purl)
+    elif "pkg:golang" in args.purl:
+        handler = GolangHandler(args.purl)
     elif "pkg:generic" in args.purl:
         handler = GenericHandler(args.purl)
     elif "pkg:github" in args.purl:

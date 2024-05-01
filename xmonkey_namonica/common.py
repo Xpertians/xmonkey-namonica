@@ -20,7 +20,7 @@ class PackageManager:
             )
         result['type'] = path_parts[0]
         name_with_version = path_parts[-1]
-        if len(path_parts) == 3:
+        if len(path_parts) >= 3:
             result['namespace'] = unquote(path_parts[1])
         else:
             result['namespace'] = None
@@ -32,6 +32,7 @@ class PackageManager:
             result['version'] = None
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
+        result['fullparts'] = path_parts
 
         return result
 
