@@ -30,10 +30,14 @@ class PackageManager:
             result['version'] = name_version[1]
         else:
             result['version'] = None
+        # Small ugly hack for Go
+        if 'golang' in result['type']:
+            if len(path_parts) == 5:
+                result['name'] = path_parts[3]
+                result['version'] = None
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
         result['fullparts'] = path_parts
-
         return result
 
     @staticmethod
