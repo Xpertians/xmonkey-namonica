@@ -54,11 +54,18 @@ Sample Cargo purl is provided below:
 xmonkey-namonica "pkg:cargo/grin@1.0.0?type=crate"
 ```
 
+### Golang (Go)
+Sample Golang purl is provided below:
+
+```
+xmonkey-namonica "pkg:golang/github.com/mailru/easyjson@v0.7.7"
+```
+
+
 ### Work in Progress:
 * Maven (*)
 * RPM
 * gem
-* Golang
 * Conan
 * Conda
 * Bower
