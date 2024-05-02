@@ -5,6 +5,7 @@ import hashlib
 import logging
 import requests
 import subprocess
+from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
@@ -26,25 +27,48 @@ class GolangHandler(BaseHandler):
                 logging.info(f"Repo cloned to {self.temp_dir}")
             self.scan()
 
+    def find_github_links(self, url):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = soup.find_all('a', href=True)
+            github_links = [
+                link['href'] for link in links if 'github.com' in link['href']
+            ]
+            if github_links:
+                gh_link = github_links[0]
+                parts = gh_link.split('/')
+                if 'tree' in parts:
+                    index = parts.index('tree')
+                    parts = parts[:index]
+                    return '/'.join(parts)
+                else:
+                    return gh_link
+            else:
+                return ''
+        except requests.RequestException as e:
+            logging.error(f"An error occurred while accessing the URL: {e}")
+            exit()
+
     def construct_repo_url(self):
-        print(self.purl_details)
         GOLANG_REPOS = {
             "go.mongodb.org": self.base_url + "mongodb/",
             "google.golang.org": self.base_url + "golang/",
-            "github.com": self.base_url + self.purl_details['fullparts'][2] + "/"
+            "github.com": (
+                self.base_url + self.purl_details['fullparts'][2] + "/"
+            )
         }
         namespace = self.purl_details['namespace']
         if namespace in GOLANG_REPOS:
             base_url = GOLANG_REPOS[namespace]
             full_url = base_url + self.purl_details['name']
         else:
-            logging.error(f"Golang REPO not supported")
-        print(full_url)
-        exit()
-        name = self.purl_details['name']
+            full_url = f"https://{namespace}/{self.purl_details['name']}"
+            full_url = self.find_github_links(full_url)
         # Default to main if no version is provided
         version = self.purl_details.get('version', 'main')
-        return f"{self.base_url}{namespace}/{name}.git", version
+        return f"{full_url}.git", version
 
     def unpack(self):
         if self.temp_dir:
