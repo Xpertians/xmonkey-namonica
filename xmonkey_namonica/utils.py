@@ -1,4 +1,6 @@
 import os
+import bz2
+import magic
 import requests
 import logging
 import zipfile
@@ -31,6 +33,7 @@ def extract_zip(file_path, extract_to):
     try:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(extract_to)
+        remove(file_path)
         logging.info(f"Extracted ZIP file {file_path} to {extract_to}")
     except zipfile.BadZipFile as e:
         logging.error(f"Failed to extract ZIP file {file_path}: {e}")
@@ -41,10 +44,56 @@ def extract_tar(file_path, extract_to):
     try:
         with tarfile.open(file_path, 'r:*') as tar_ref:
             tar_ref.extractall(extract_to)
+        remove(file_path)
         logging.info(f"Extracted TAR file {file_path} to {extract_to}")
     except tarfile.TarError as e:
         logging.error(f"Failed to extract TAR file {file_path}: {e}")
         raise
+
+
+def extract_bz2(file_path, extract_to):
+    try:
+        if not os.path.exists(extract_to):
+            os.makedirs(extract_to)
+        output_file_path = os.path.join(extract_to, os.path.basename(file_path).replace('.bz2', ''))
+        with bz2.BZ2File(file_path, 'rb') as file:
+            decompressed_data = file.read()
+            with open(output_file_path, 'wb') as f_out:
+                f_out.write(decompressed_data)
+        remove(file_path)
+        logging.info(f"Extracted BZ2 file {file_path} to {output_file_path}")
+    except OSError as e:
+        logging.error(f"Failed to extract BZ2 file {file_path}: {e}")
+        raise
+
+
+def check_and_extract(path, extract_to):
+    if os.path.isdir(path):
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                mime = magic.Magic(mime=True)
+                mimetype = mime.from_file(file_path)
+                if 'gzip' in mimetype:
+                    extract_tar(file_path, extract_to)
+                    logging.info(f"Unpacked package in {extract_to}")
+                elif 'tar' in mimetype:
+                    extract_tar(file_path, extract_to)
+                    logging.info(f"Unpacked package in {extract_to}")
+                elif 'bzip2' in mimetype:
+                    extract_bz2(file_path, extract_to)
+                    logging.info(f"Unpacked package in {extract_to}")
+    elif os.path.isfile(path):
+        recursive_extract(path, os.path.dirname(path))
+
+
+def remove(path):
+    if os.path.isfile(path) or os.path.islink(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        raise ValueError("file {} is not a file or dir.".format(path))
 
 
 @contextmanager
