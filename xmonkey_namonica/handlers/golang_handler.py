@@ -90,7 +90,7 @@ class GolangHandler(BaseHandler):
         results = {}
         logging.info("Scanning package contents...")
         files = PackageManager.scan_for_files(
-            self.temp_dir, ['COPYRIGHT', 'NOTICES', 'LICENSE']
+            self.temp_dir, ['COPYRIGHT', 'NOTICES', 'LICENSE', 'COPYING']
         )
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)

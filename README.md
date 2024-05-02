@@ -61,11 +61,16 @@ Sample Golang purl is provided below:
 xmonkey-namonica "pkg:golang/github.com/mailru/easyjson@v0.7.7"
 ```
 
+### Gem (Ruby)
+Sample Ruby purl is provided below:
+
+```
+xmonkey-namonica "pkg:gem/jruby-launcher@1.1.18?platform=java"
+```
 
 ### Work in Progress:
 * Maven (*)
 * RPM
-* gem
 * Conan
 * Conda
 * Bower

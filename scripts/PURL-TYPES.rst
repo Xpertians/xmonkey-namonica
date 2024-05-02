@@ -261,6 +261,7 @@ gem
 
       pkg:gem/ruby-advisory-db-check@0.12.4
       pkg:gem/jruby-launcher@1.1.2?platform=java
+	  xmonkey-namonica "pkg:gem/jruby-launcher@1.1.18?platform=java"
 
 generic
 -------
