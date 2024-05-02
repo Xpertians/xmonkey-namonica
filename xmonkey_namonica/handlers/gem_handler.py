@@ -5,19 +5,19 @@ import hashlib
 import logging
 import requests
 import subprocess
+from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
 from ..utils import download_file, temp_directory, extract_tar
 
 
-class GithubHandler(BaseHandler):
+class GemHandler(BaseHandler):
     def fetch(self):
-        self.base_url = "https://github.com/"
         repo_url = self.construct_repo_url()
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
-            if self.purl_details['subpath']:
+            if 'rubygem' in repo_url:
                 self.fetch_file(repo_url)
                 logging.info(f"File downloaded in {self.temp_dir}")
                 self.unpack()
@@ -27,11 +27,46 @@ class GithubHandler(BaseHandler):
             self.scan()
 
     def construct_repo_url(self):
-        namespace = self.purl_details['namespace']
-        name = self.purl_details['name']
-        # Default to main if no version is provided
-        version = self.purl_details.get('version', 'main')
-        return f"{self.base_url}{namespace}/{name}.git", version
+        pkg_name = self.purl_details['name']
+        pkg_version = self.purl_details['version']
+        download_url = (
+            f"https://rubygems.org/downloads/{pkg_name}-{pkg_version}.gem"
+        )
+        response = requests.get(download_url)
+        if response.status_code == 200:
+            return download_url
+        else:
+            api_url = f"https://rubygems.org/api/v1/gems/{pkg_name}.json"
+            logging.info(f"api_url: {api_url}")
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                data = response.json()
+                gem_url = data.get('gem_uri', '')
+                if gem_url is None:
+                    gem_url = ''
+                print(data)
+                source_code_url = data.get('source_code_uri', '')
+                if source_code_url is None:
+                    source_code_url = ''
+                homepage_url = data.get('homepage_uri', '')
+                if homepage_url is None:
+                    homepage_url = ''
+                repo_url = ''
+                if 'rubygems.org' in gem_url:
+                    return gem_url
+                elif 'github.com' in source_code_url:
+                    repo_url = source_code_url
+                elif 'github.com' in homepage_url:
+                    repo_url = homepage_url
+                else:
+                    logging.error(
+                        f"Invalid source URL: {source_code_url} {homepage_url}"
+                    )
+                    exit()
+            else:
+                logging.error(f"Failed to fetch data: {response.status_code}")
+                exit()
+            return f"{repo_url}.git"
 
     def unpack(self):
         if self.temp_dir:
@@ -43,6 +78,11 @@ class GithubHandler(BaseHandler):
             mimetype = mime.from_file(package_file_path)
             if 'gzip' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'tar' in mimetype:
+                extract_tar(package_file_path, self.temp_dir)
+                extract_tar(self.temp_dir+'/data.tar.gz', self.temp_dir)
+                # extract_tar(self.temp_dir+'/metadata.gz', self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")
             else:
                 logging.error(f"MimeType not supported {mimetype}")
@@ -87,14 +127,7 @@ class GithubHandler(BaseHandler):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
-            if self.purl_details['version']:
-                version = self.purl_details['version']
-                subprocess.run(
-                    ["git", "-C", self.temp_dir, "checkout", version],
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+            # Here should clone base on version. Check GoLang
             logging.info(f"Repository cloned successfully to {self.temp_dir}")
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone repository: {e}")

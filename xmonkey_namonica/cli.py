@@ -8,6 +8,7 @@ from .handlers.nuget_handler import NugetHandler
 from .handlers.gen_handler import GenericHandler
 from .handlers.github_handler import GithubHandler
 from .handlers.golang_handler import GolangHandler
+from .handlers.gem_handler import GemHandler
 
 
 def main():
@@ -33,6 +34,8 @@ def main():
         handler = NugetHandler(args.purl)
     elif "pkg:golang" in args.purl:
         handler = GolangHandler(args.purl)
+    elif "pkg:gem" in args.purl:
+        handler = GemHandler(args.purl)
     elif "pkg:generic" in args.purl:
         handler = GenericHandler(args.purl)
     elif "pkg:github" in args.purl:
