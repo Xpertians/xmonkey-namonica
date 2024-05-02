@@ -33,7 +33,9 @@ class GolangHandler(BaseHandler):
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             links = soup.find_all('a', href=True)
-            github_links = [link['href'] for link in links if 'github.com' in link['href']]
+            github_links = [
+                link['href'] for link in links if 'github.com' in link['href']
+            ]
             if github_links:
                 gh_link = github_links[0]
                 parts = gh_link.split('/')
@@ -53,14 +55,16 @@ class GolangHandler(BaseHandler):
         GOLANG_REPOS = {
             "go.mongodb.org": self.base_url + "mongodb/",
             "google.golang.org": self.base_url + "golang/",
-            "github.com": self.base_url + self.purl_details['fullparts'][2] + "/"
+            "github.com": (
+                self.base_url + self.purl_details['fullparts'][2] + "/"
+            )
         }
         namespace = self.purl_details['namespace']
         if namespace in GOLANG_REPOS:
             base_url = GOLANG_REPOS[namespace]
             full_url = base_url + self.purl_details['name']
         else:
-            full_url = 'https://' + namespace + '/'+ self.purl_details['name']
+            full_url = f"https://{namespace}/{self.purl_details['name']}"
             full_url = self.find_github_links(full_url)
         # Default to main if no version is provided
         version = self.purl_details.get('version', 'main')
