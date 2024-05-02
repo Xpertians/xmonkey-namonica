@@ -1,0 +1,10 @@
+xmonkey-namonica "pkg:generic/bitwarderl?vcs_url=git%2Bhttps://git.fsfe.org/dxtr/bitwarderl%40cc55108da32" --full
+xmonkey-namonica "pkg:generic/openssl@1.1.10g?download_url=https://openssl.org/source/openssl-1.1.0g.tar.gz&checksum=sha256:de4d501267da" --full
+xmonkey-namonica "pkg:github/package-url/purl-spec@b33dda1cf4515efa8eabbbe8e9b140950805f845" --full
+xmonkey-namonica "pkg:npm/tslib@2.6.2/" --full
+xmonkey-namonica "pkg:nuget/Nirvana.MongoProvider@2.1.154" --full
+xmonkey-namonica "pkg:pypi/flask@3.0.3/" --full
+xmonkey-namonica "pkg:cargo/grin@1.0.0?type=crate" --full
+xmonkey-namonica "pkg:golang/github.com/mailru/easyjson@v0.7.7" --full
+xmonkey-namonica "pkg:gem/jruby-launcher@1.1.18?platform=java" --full
+xmonkey-namonica "pkg:conda/absl-py@1.3.0?build=pyhd8ed1ab_0&channel=main&subdir=noarch" --full

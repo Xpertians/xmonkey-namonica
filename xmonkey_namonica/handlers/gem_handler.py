@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
-from ..utils import download_file, temp_directory, extract_tar
+from ..utils import download_file, temp_directory
+from ..utils import extract_tar, extract_zip
 
 
 class GemHandler(BaseHandler):
@@ -44,7 +45,6 @@ class GemHandler(BaseHandler):
                 gem_url = data.get('gem_uri', '')
                 if gem_url is None:
                     gem_url = ''
-                print(data)
                 source_code_url = data.get('source_code_uri', '')
                 if source_code_url is None:
                     source_code_url = ''
@@ -77,7 +77,7 @@ class GemHandler(BaseHandler):
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
             if 'gzip' in mimetype:
-                extract_tar(package_file_path, self.temp_dir)
+                extract_zip(package_file_path, self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")
             elif 'tar' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)

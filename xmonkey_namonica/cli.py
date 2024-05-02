@@ -1,14 +1,15 @@
 import argparse
 import json
 import os
+from .handlers.gem_handler import GemHandler
 from .handlers.npm_handler import NpmHandler
-from .handlers.cargo_handler import CargoHandler
 from .handlers.pypi_handler import PypiHandler
+from .handlers.cargo_handler import CargoHandler
 from .handlers.nuget_handler import NugetHandler
 from .handlers.gen_handler import GenericHandler
+from .handlers.conda_handler import CondaHandler
 from .handlers.github_handler import GithubHandler
 from .handlers.golang_handler import GolangHandler
-from .handlers.gem_handler import GemHandler
 
 
 def main():
@@ -36,6 +37,8 @@ def main():
         handler = GolangHandler(args.purl)
     elif "pkg:gem" in args.purl:
         handler = GemHandler(args.purl)
+    elif "pkg:conda" in args.purl:
+        handler = CondaHandler(args.purl)
     elif "pkg:generic" in args.purl:
         handler = GenericHandler(args.purl)
     elif "pkg:github" in args.purl:

@@ -68,11 +68,17 @@ Sample Ruby purl is provided below:
 xmonkey-namonica "pkg:gem/jruby-launcher@1.1.18?platform=java"
 ```
 
+### Conda (Python Conda)
+Sample Conda purl is provided below:
+
+```
+xmonkey-namonica "pkg:conda/absl-py@1.3.0?build=pyhd8ed1ab_0&channel=main&subdir=noarch"
+```
+
 ### Work in Progress:
 * Maven (*)
 * RPM
 * Conan
-* Conda
 * Bower
 * Composer
 * Cran
