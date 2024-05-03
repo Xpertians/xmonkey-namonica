@@ -124,6 +124,8 @@ class GolangHandler(BaseHandler):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
+            if 'latest' in self.purl_details['version']:
+                self.purl_details['version'] = None
             if self.purl_details['version']:
                 version = self.purl_details['version']
                 subprocess.run(
