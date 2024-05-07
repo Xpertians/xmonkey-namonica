@@ -18,5 +18,7 @@ setup(
         "numpy",
         "requests",
         "urllib3",
+        "python-magic",
+        "beautifulsoup4",
     ],
 )
