@@ -55,7 +55,10 @@ def extract_bz2(file_path, extract_to):
     try:
         if not os.path.exists(extract_to):
             os.makedirs(extract_to)
-        output_file_path = os.path.join(extract_to, os.path.basename(file_path).replace('.bz2', ''))
+        output_file_path = os.path.join(
+            extract_to,
+            os.path.basename(file_path).replace('.bz2', '')
+        )
         with bz2.BZ2File(file_path, 'rb') as file:
             decompressed_data = file.read()
             with open(output_file_path, 'wb') as f_out:
