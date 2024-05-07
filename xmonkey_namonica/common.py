@@ -1,7 +1,6 @@
 import os
 import re
 import json
-import spacy
 from urllib.parse import unquote, urlparse, parse_qs
 from urllib.parse import urlparse, parse_qs, unquote
 from .utils import download_file, temp_directory, extract_zip, extract_tar
@@ -82,7 +81,6 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir):
-        # nlp = spacy.load("en_core_web_sm")
         copyrights = []
         pattern = "[^0-9<>,.()@a-zA-Z-\s]+"
         for root, _, files in os.walk(temp_dir):
@@ -91,26 +89,18 @@ class PackageManager:
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         for line in f:
-                            if ("copyright" in line.lower() and
-                                    len(line) <= 50):
-                                copyhit = line.strip()
-                                copyhit = re.sub(pattern, "", line.strip())
-                                if 'yyyy' not in copyhit.strip():
-                                    # print(copyhit.strip())
-                                    # doc = nlp(copyhit.strip())
-                                    # entity_names = [
-                                    #    ent.text
-                                    #    for ent in doc.ents
-                                    #    if ent.label_ in ("ORG", "PERSON")
-                                    # ]
-                                    # print('entity_names:', entity_names)
+                            clean_line = line.strip().lower()
+                            if "copyright " in clean_line and len(clean_line) <= 50:
+                                clean_line = re.sub(pattern, "", clean_line)
+                                if clean_line.startswith('copyright') or " copyright" in clean_line:
                                     copyrights.append({
                                         "file": file_path,
-                                        "line": copyhit.strip()
+                                        "line": clean_line
                                     })
                 except UnicodeDecodeError:
                     continue
         return copyrights
+
 
     @staticmethod
     def serialize_output(data):
