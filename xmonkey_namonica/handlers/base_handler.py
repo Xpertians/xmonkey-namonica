@@ -29,6 +29,11 @@ class BaseHandler(ABC):
         """Generate a report from the scanned data."""
         pass
 
+    @abstractmethod
+    def get_license(self, pkg_name):
+        """Obtain the license from repo or package metadata."""
+        pass
+
     def cleanup(self):
         """Remove the temporary directory created for package handling."""
         if self.temp_dir and os.path.exists(self.temp_dir):

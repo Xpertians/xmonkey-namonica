@@ -98,11 +98,30 @@ class GemHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
+        pkg_name = self.purl_details['name']
+        results['license'] = self.get_license(pkg_name)
         self.results = results
 
     def generate_report(self):
         logging.info("Generating report based on the scanned data...")
         return self.results
+
+    def get_license(self, pkg_name):
+        url = f"https://rubygems.org/api/v1/gems/{pkg_name}.json"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            print('data:', data)
+            license_info = data.get('licenses') or data.get('license')
+            if license_info:
+                if isinstance(license_info, list):
+                    return ', '.join(license_info)
+                return license_info
+            else:
+                return ''
+        else:
+            logging.error("Can't obtain data from Crates.IO")
+            return ''
 
     def fetch_file(self, url):
         response = requests.get(url)

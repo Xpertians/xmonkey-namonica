@@ -1,6 +1,7 @@
 import os
 import magic
 import logging
+import requests
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
@@ -56,11 +57,25 @@ class CondaHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
+        pkg_name = self.purl_details['name']
+        results['license'] = self.get_license(pkg_name)
         self.results = results
 
     def generate_report(self):
         logging.info("Generating report based on the scanned data...")
         return self.results
+
+    def get_license(self, pkg_name):
+        channel='conda-forge'
+        url = f"https://api.anaconda.org/package/{channel}/{pkg_name}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            license_info = data.get('license', 'License information not available')
+            return license_info
+        else:
+            logging.error("Can't obtain data from Crates.IO")
+            return ''
 
     def construct_download_url(self):
         base_url = "https://anaconda.org/conda-forge/"

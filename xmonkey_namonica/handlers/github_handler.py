@@ -15,6 +15,7 @@ class GithubHandler(BaseHandler):
     def fetch(self):
         self.base_url = "https://github.com/"
         repo_url = self.construct_repo_url()
+        self.repo_url = repo_url
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
             if self.purl_details['subpath']:
@@ -58,11 +59,30 @@ class GithubHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
+        results['license'] = self.get_license(self.repo_url)
         self.results = results
 
     def generate_report(self):
         logging.info("Generating report based on the scanned data...")
         return self.results
+
+    def get_license(self, repo_url):
+        repo_url = repo_url[0]
+        if repo_url.endswith('.git'):
+                repo_url = repo_url[:-4]
+        repo_path = repo_url.split("github.com/")[1]
+        api_url = f"https://api.github.com/repos/{repo_path}/license"
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            data = response.json()
+            license_name = data.get('license', {}).get('name', 'License information not available')
+            return license_name
+        elif response.status_code == 404:
+            logging.error("License file not found in repository")
+            return ''
+        else:
+            logging.error("Failed to fetch license information: HTTP {response.status_code}")
+            return ''
 
     def fetch_file(self, url):
         response = requests.get(url)
