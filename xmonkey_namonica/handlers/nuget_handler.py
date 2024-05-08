@@ -1,5 +1,6 @@
 import os
 import logging
+import requests
 from .base_handler import BaseHandler
 from ..common import PackageManager, temp_directory
 from ..utils import download_file, temp_directory, extract_zip
@@ -45,11 +46,29 @@ class NugetHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
+        pkg_name = self.purl_details['name']
+        results['license'] = self.get_license(pkg_name)
         self.results = results
 
     def generate_report(self):
         logging.info("Generating report based on the scanned data...")
         return self.results
+
+    def get_license(self, pkg_name):
+        pkg_name = pkg_name.lower()
+        url = f"https://api.nuget.org/v3/registration5-semver1/{pkg_name}/index.json"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            latest_version_data = data['items'][-1]['items'][-1]['catalogEntry']
+            license_expression = latest_version_data.get('licenseExpression', 'No license expression available')
+            license_url = latest_version_data.get('licenseUrl', 'No license URL available')
+            if not license_expression:
+                license_expression = license_url
+            return license_expression
+        else:
+            logging.error("Can't obtain data from Nuget Registry")
+            return ''
 
     def construct_download_url(self):
         namespace = (

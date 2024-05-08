@@ -37,7 +37,7 @@ xmonkey-namonica "pkg:npm/tslib@2.6.2/"
 Sample NuGet purl is provided below:
 
 ```
-xmonkey-namonica "pkg:nuget/Nirvana.MongoProvider@2.1.154"
+xmonkey-namonica "pkg:nuget/Newtonsoft.json@13.0.3"
 ```
 
 ### PyPI
