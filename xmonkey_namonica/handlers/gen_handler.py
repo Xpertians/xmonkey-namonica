@@ -53,11 +53,16 @@ class GenericHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
+        # Needs OSLiLi implementation
+        results['license'] = ''
         self.results = results
 
     def generate_report(self):
         logging.info("Generating report based on the scanned data...")
         return self.results
+
+    def get_license(self, file_url):
+        return ''
 
     def verify_checksum(self, data, provided_checksum):
         if ':' in provided_checksum:
