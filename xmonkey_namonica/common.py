@@ -83,8 +83,14 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir):
-        naive_bayes_model_path = resource_filename(__name__, 'datasets/naive_bayes_model.pkl')
-        tfidf_data_path = resource_filename(__name__, 'datasets/tfidf_data.pkl')
+        naive_bayes_model_path = resource_filename(
+            __name__,
+            'datasets/naive_bayes_model.pkl'
+        )
+        tfidf_data_path = resource_filename(
+            __name__,
+            'datasets/tfidf_data.pkl'
+        )
         with open(naive_bayes_model_path, 'rb') as f:
             classifier = pickle.load(f)
         with open(tfidf_data_path, 'rb') as f:
@@ -107,8 +113,12 @@ class PackageManager:
                                     clean_line.startswith('copyright')
                                     or " copyright" in clean_line
                                 ):
-                                    input_tfidf = vectorizer.transform([clean_line])
-                                    prediction = classifier.predict(input_tfidf)[0]
+                                    input_tfidf = vectorizer.transform(
+                                        [clean_line]
+                                    )
+                                    prediction = classifier.predict(
+                                        input_tfidf
+                                    )[0]
                                     if 'copyright' in prediction:
                                         copyrights.append({
                                             "file": file_path,
