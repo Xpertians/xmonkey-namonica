@@ -63,7 +63,7 @@ class CargoHandler(BaseHandler):
             versions = data['versions']
             for version in versions:
                 if version['num'] == latest_version:
-                    license_info = version.get('license', 'License information not available')
+                    license_info = version.get('license', '')
                     return license_info
             logging.error("License information not available from Crates.IO")
             return ''

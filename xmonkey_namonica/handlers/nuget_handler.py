@@ -56,13 +56,16 @@ class NugetHandler(BaseHandler):
 
     def get_license(self, pkg_name):
         pkg_name = pkg_name.lower()
-        url = f"https://api.nuget.org/v3/registration5-semver1/{pkg_name}/index.json"
+        url = (
+            "https://api.nuget.org/v3/registration5-semver1/"
+            f"{pkg_name}/index.json"
+        )
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            latest_version_data = data['items'][-1]['items'][-1]['catalogEntry']
-            license_expression = latest_version_data.get('licenseExpression', 'No license expression available')
-            license_url = latest_version_data.get('licenseUrl', 'No license URL available')
+            l_vdata = data['items'][-1]['items'][-1]['catalogEntry']
+            license_expression = l_vdata.get('licenseExpression', '')
+            license_url = l_vdata.get('licenseUrl', '')
             if not license_expression:
                 license_expression = license_url
             return license_expression

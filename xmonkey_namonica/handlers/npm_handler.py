@@ -60,7 +60,7 @@ class NpmHandler(BaseHandler):
         if response.status_code == 200:
             data = response.json()
             latest_version = data['dist-tags']['latest']
-            license_info = data['versions'][latest_version].get('license', 'License information not available')
+            license_info = data['versions'][latest_version].get('license', '')
             return license_info
         else:
             logging.error("Can't obtain data from NPM")

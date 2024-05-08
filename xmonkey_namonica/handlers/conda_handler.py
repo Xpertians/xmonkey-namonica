@@ -66,12 +66,12 @@ class CondaHandler(BaseHandler):
         return self.results
 
     def get_license(self, pkg_name):
-        channel='conda-forge'
+        channel = 'conda-forge'
         url = f"https://api.anaconda.org/package/{channel}/{pkg_name}"
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            license_info = data.get('license', 'License information not available')
+            license_info = data.get('license', '')
             return license_info
         else:
             logging.error("Can't obtain data from Crates.IO")

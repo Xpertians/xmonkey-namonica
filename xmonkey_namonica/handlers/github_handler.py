@@ -69,19 +69,21 @@ class GithubHandler(BaseHandler):
     def get_license(self, repo_url):
         repo_url = repo_url[0]
         if repo_url.endswith('.git'):
-                repo_url = repo_url[:-4]
+            repo_url = repo_url[:-4]
         repo_path = repo_url.split("github.com/")[1]
         api_url = f"https://api.github.com/repos/{repo_path}/license"
         response = requests.get(api_url)
         if response.status_code == 200:
             data = response.json()
-            license_name = data.get('license', {}).get('name', 'License information not available')
+            license_name = data.get('license', {}).get('name', '')
             return license_name
         elif response.status_code == 404:
             logging.error("License file not found in repository")
             return ''
         else:
-            logging.error("Failed to fetch license information: HTTP {response.status_code}")
+            logging.error(
+                "Failed: HTTP {response.status_code}"
+            )
             return ''
 
     def fetch_file(self, url):

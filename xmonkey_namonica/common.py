@@ -90,9 +90,15 @@ class PackageManager:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         for line in f:
                             clean_line = line.strip().lower()
-                            if "copyright " in clean_line and len(clean_line) <= 50:
+                            if (
+                                "copyright " in clean_line
+                                and len(clean_line) <= 50
+                            ):
                                 clean_line = re.sub(pattern, "", clean_line)
-                                if clean_line.startswith('copyright') or " copyright" in clean_line:
+                                if (
+                                    clean_line.startswith('copyright')
+                                    or " copyright" in clean_line
+                                ):
                                     copyrights.append({
                                         "file": file_path,
                                         "line": clean_line
@@ -100,7 +106,6 @@ class PackageManager:
                 except UnicodeDecodeError:
                     continue
         return copyrights
-
 
     @staticmethod
     def serialize_output(data):
