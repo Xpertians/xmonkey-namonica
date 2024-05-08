@@ -59,7 +59,6 @@ class PypiHandler(BaseHandler):
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            print(data)
             license_info = data['info'].get('license')
             if not license_info:
                 classifiers = data['info'].get('classifiers', [])
