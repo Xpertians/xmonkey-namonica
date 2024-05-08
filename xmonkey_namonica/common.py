@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import pickle
+from pkg_resources import resource_filename
 from urllib.parse import unquote, urlparse, parse_qs
 from urllib.parse import urlparse, parse_qs, unquote
 from .utils import download_file, temp_directory, extract_zip, extract_tar
@@ -81,6 +83,12 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir):
+        naive_bayes_model_path = resource_filename(__name__, 'datasets/naive_bayes_model.pkl')
+        tfidf_data_path = resource_filename(__name__, 'datasets/tfidf_data.pkl')
+        with open(naive_bayes_model_path, 'rb') as f:
+            classifier = pickle.load(f)
+        with open(tfidf_data_path, 'rb') as f:
+            _, _, _, _, vectorizer = pickle.load(f)
         copyrights = []
         pattern = "[^0-9<>,.()@a-zA-Z-\s]+"
         for root, _, files in os.walk(temp_dir):
@@ -99,10 +107,13 @@ class PackageManager:
                                     clean_line.startswith('copyright')
                                     or " copyright" in clean_line
                                 ):
-                                    copyrights.append({
-                                        "file": file_path,
-                                        "line": clean_line
-                                    })
+                                    input_tfidf = vectorizer.transform([clean_line])
+                                    prediction = classifier.predict(input_tfidf)[0]
+                                    if 'copyright' in prediction:
+                                        copyrights.append({
+                                            "file": file_path,
+                                            "line": clean_line
+                                        })
                 except UnicodeDecodeError:
                     continue
         return copyrights
