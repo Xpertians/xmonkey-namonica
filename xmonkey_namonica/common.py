@@ -3,6 +3,7 @@ import re
 import json
 import pickle
 from pkg_resources import resource_filename
+from oslili import LicenseAndCopyrightIdentifier
 from urllib.parse import unquote, urlparse, parse_qs
 from urllib.parse import urlparse, parse_qs, unquote
 from .utils import download_file, temp_directory, extract_zip, extract_tar
@@ -57,6 +58,7 @@ class PackageManager:
 
     @staticmethod
     def scan_for_files(temp_dir, patterns):
+        identifier = LicenseAndCopyrightIdentifier()
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
             for file in files:
@@ -66,9 +68,14 @@ class PackageManager:
                 ):
                     file_path = os.path.join(root, file)
                     file_text = PackageManager.read_file_content(file_path)
+                    spdx_code, proba = identifier.identify_license(
+                        file_text
+                    )
                     found_files.append({
                         "file": file_path,
-                        "content": file_text
+                        "content": file_text,
+                        "spdx": spdx_code,
+                        "oslili": proba,
                     })
         return found_files
 
