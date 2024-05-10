@@ -1,0 +1,10 @@
+pkg:generic/bitwarderl?vcs_url=git%2Bhttps://git.fsfe.org/dxtr/bitwarderl%40cc55108da32
+pkg:generic/openssl@1.1.10g?download_url=https://openssl.org/source/openssl-1.1.0g.tar.gz&checksum=sha256:de4d501267da
+pkg:github/package-url/purl-spec@b33dda1cf4515efa8eabbbe8e9b140950805f845
+pkg:npm/tslib@2.6.2/
+pkg:nuget/Nirvana.MongoProvider@2.1.154
+pkg:pypi/flask@3.0.3/
+pkg:cargo/grin@1.0.0?type=crate
+pkg:golang/github.com/mailru/easyjson@v0.7.7
+pkg:gem/jruby-launcher@1.1.18?platform=java
+pkg:conda/absl-py@1.3.0?build=pyhd8ed1ab_0&channel=main&subdir=noarch
