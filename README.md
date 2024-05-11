@@ -94,7 +94,7 @@ xmonkey-namonica "pkg:conda/absl-py@1.3.0?build=pyhd8ed1ab_0&channel=main&subdir
 ## Install
 Before installing xmonkey-namonica, you must install some system dependencies required by the tool.
 
-xmonkey-namonica requires Python3.6+ and [ssdeep](https://ssdeep-project.github.io/ssdeep/index.html) for Fuzzy Hashing calculations.
+xmonkey-namonica requires Python3.8+ and [ssdeep](https://ssdeep-project.github.io/ssdeep/index.html) for Fuzzy Hashing calculations.
 
 ### Mac
 When you attempt to install ssdeep on Mac, you must first verify glibtoolize is available.
@@ -117,7 +117,12 @@ $ sudo yum group install "Development Tools" -y
 $ sudo yum install python3-devel sdeep ssdeep-devel -y
 $ pip3 install --upgrade wheel
 $ pip3 install --upgrade cffi
+$ pip3 install xmonkey-namonica
 ```
+
+## Troubleshooting
+
+### urllib3
 
 If you are dealing with an error similar to the one displayed below, you will need to downgrade urllib3:
 
@@ -128,4 +133,19 @@ ImportError: urllib3 v2.0 only supports OpenSSL 1.1.1+, currently the 'ssl' modu
 
 ```
 $ pip3 install "urllib3<2.0"
+```
+
+### Old Python on AL2
+
+If your system doesn't support Python 3.8+, you can upgrade to the most recent version using amazon-linux-extras:
+
+```
+$ sudo yum remove python3
+$ sudo amazon-linux-extras install python3.8
+$ rpm -ql python38
+$ sudo ln -s /usr/bin/python3.8 /usr/bin/python3
+$ sudo yum install python38-devel
+$ python3 -m pip install --upgrade cffi
+$ python3 -m pip install xmonkey-namonica
+$ python3 -m pip install "urllib3<2.0"
 ```
