@@ -1,7 +1,13 @@
-# xmonkey-namonica
+# Xmonkey Namonica
+## Summary
+Xmonkey Namonica (xmonkey-namonica) is a Python tool created to facilitate the generation of Open Source Legal Notices, which contain copyright and license information from Open Source packages. The main goal of the tool is to provide a tool for developers to programmatically generate legal notices for the open-source software shipped in their projects, with fewer requirements and no friction.
+
+The tool uses a few other Xmonkey libraries under the hood, for example:
+* OSLiLi: Open Source License Identification Library, a tool that uses fuzzy hashing and ML Naive Bayesian Filter to identify licenses.
+* Python-ssdeep: the main ssdeep library that wraps ssdeep for Fuzzy Hashing.
 
 ## Package URL (purl)
-A single URL parameter using a common industry standard structure. See the [PURL Spec](https://github.com/package-url/purl-spec) project for details on the specification's structure. In some cases, xmonkey-namonica may deviate from the purl spec standard to precisely identify components used in your application, like when you must submit a Compliance Tarball for Copyleft licenses.
+PURL is a single URL parameter that uses a common industry standard structure to identify a package (Software). See the [PURL Spec](https://github.com/package-url/purl-spec) project for details on the specification's structure. In some cases, xmonkey-namonica may deviate from the purl spec standard to precisely identify components used in your application, like when you must submit a Compliance Tarball for Copyleft licenses.
 
 ```
 "pkg:{ecosystem}/[{namespace}/]{component_name}@{version}[?{qualifier}={value}]"
