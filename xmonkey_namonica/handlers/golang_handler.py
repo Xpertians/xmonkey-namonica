@@ -144,8 +144,8 @@ class GolangHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
-        results['license'] = ''
-        # self.get_license(self.repo_url)
+        self.results = results
+        results['license'] = self.get_license(self.repo_url)
         self.results = results
 
     def generate_report(self):
@@ -154,21 +154,26 @@ class GolangHandler(BaseHandler):
 
     def get_license(self, repo_url):
         repo_url = repo_url[0]
-        if repo_url.endswith('.git'):
-            repo_url = repo_url[:-4]
-        repo_path = repo_url.split("github.com/")[1]
-        api_url = f"https://api.github.com/repos/{repo_path}/license"
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            data = response.json()
-            license_name = data.get('license', {}).get('name', '')
-            return license_name
-        elif response.status_code == 404:
-            logging.error("License file not found in repository")
-            return ''
+        if "proxy" in repo_url:
+            info_url = repo_url.replace('.zip', '.info')
+            license_files = self.results['license_files']
+            print(license_files[0])
         else:
-            logging.error("Failed: HTTP {response.status_code}")
-            return ''
+            if repo_url.endswith('.git'):
+                repo_url = repo_url[:-4]
+            repo_path = repo_url.split("github.com/")[1]
+            api_url = f"https://api.github.com/repos/{repo_path}/license"
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                data = response.json()
+                license_name = data.get('license', {}).get('name', '')
+                return license_name
+            elif response.status_code == 404:
+                logging.error("License file not found in repository")
+                return ''
+            else:
+                logging.error("Failed: HTTP {response.status_code}")
+                return ''
 
     def fetch_file(self, url):
         response = requests.get(url)
