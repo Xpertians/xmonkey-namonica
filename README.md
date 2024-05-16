@@ -149,3 +149,5 @@ $ python3 -m pip install --upgrade cffi
 $ python3 -m pip install xmonkey-namonica
 $ python3 -m pip install "urllib3<2.0"
 ```
+
+If you still have trouble, please install Python 3.9+ from source. Here is an interesting guide that can help: https://techviewleo.com/how-to-install-python-on-amazon-linux-2/
