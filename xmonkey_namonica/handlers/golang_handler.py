@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
-from ..utils import download_file, temp_directory, extract_tar
+from ..utils import download_file, temp_directory, check_and_extract
+from ..utils import extract_zip, extract_tar, extract_bz2
 
 
 class GolangHandler(BaseHandler):
@@ -69,7 +70,9 @@ class GolangHandler(BaseHandler):
             )
         }
         base_url = "https://proxy.golang.org"
-        go_pkg = "/".join(self.purl_details['fullparts']).replace('golang/', '')
+        go_pkg = "/".join(self.purl_details['fullparts']).replace(
+            'golang/', ''
+        )
         if "@" in go_pkg:
             go_pkg, version = go_pkg.split("@")
         # Check if pkg exist
@@ -105,7 +108,6 @@ class GolangHandler(BaseHandler):
                 full_url = f"https://{namespace}/{self.purl_details['name']}"
                 full_url = self.find_github_links(full_url)
                 full_url = f"{full_url}.git"
-        print(full_url)
         return f"{full_url}", version
 
     def unpack(self):
@@ -117,7 +119,16 @@ class GolangHandler(BaseHandler):
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
             if 'gzip' in mimetype:
+                extract_zip(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'zip' in mimetype:
+                extract_zip(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'tar' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'bzip2' in mimetype:
+                extract_bz2(package_file_path, self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")
             else:
                 logging.error(f"MimeType not supported {mimetype}")
@@ -133,7 +144,8 @@ class GolangHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
-        results['license'] = self.get_license(self.repo_url)
+        results['license'] = ''
+        # self.get_license(self.repo_url)
         self.results = results
 
     def generate_report(self):
@@ -193,7 +205,10 @@ class GolangHandler(BaseHandler):
                         stderr=subprocess.DEVNULL
                     )
                 except subprocess.CalledProcessError:
-                    logging.warning(f"Failed to checkout version {version}, defaulting to master/main")
+                    logging.warning(
+                        f"Failed to checkout version {version}, "
+                        f"defaulting to master/main"
+                    )
             logging.info(f"Repository cloned successfully to {self.temp_dir}")
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone repository: {e}")

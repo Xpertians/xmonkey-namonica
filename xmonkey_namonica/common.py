@@ -40,7 +40,7 @@ class PackageManager:
                 result['version'] = None
             if len(path_parts) <= 3:
                 raise ValueError(
-                    "Invalid PURL format. Expected at least pkg:type/name@version"
+                    "Invalid PURL format."
                 )
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
