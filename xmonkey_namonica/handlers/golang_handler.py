@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
-from ..utils import download_file, temp_directory, extract_tar
+from ..utils import download_file, temp_directory, check_and_extract
+from ..utils import extract_zip, extract_tar, extract_bz2
 
 
 class GolangHandler(BaseHandler):
@@ -19,8 +20,8 @@ class GolangHandler(BaseHandler):
         self.repo_url = repo_url
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
-            if self.purl_details['subpath']:
-                self.fetch_file(repo_url)
+            if "proxy" in self.repo_url[0]:
+                self.fetch_file(repo_url[0])
                 logging.info(f"File downloaded in {self.temp_dir}")
                 self.unpack()
             else:
@@ -54,22 +55,60 @@ class GolangHandler(BaseHandler):
 
     def construct_repo_url(self):
         GOLANG_REPOS = {
-            "go.mongodb.org": self.base_url + "mongodb/",
-            "google.golang.org": self.base_url + "golang/",
+            "cloud.google.com/go": "googleapis/google-cloud-go",
+            "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
+            "google.golang.org/grpc": "grpc/grpc-go",
+            "golang.org/x/tools": "golang/tools",
+            "golang.org/x/net": "golang/net",
+            "golang.org/x/sys": "golang/sys",
+            "golang.org/x/text": "golang/text",
+            "golang.org/x/crypto": "golang/crypto",
+            "k8s.io/kubernetes": "kubernetes/kubernetes",
+            "k8s.io/client-go": "kubernetes/client-go",
             "github.com": (
                 self.base_url + self.purl_details['fullparts'][2] + "/"
             )
         }
-        namespace = self.purl_details['namespace']
-        if namespace in GOLANG_REPOS:
-            base_url = GOLANG_REPOS[namespace]
-            full_url = base_url + self.purl_details['name']
+        base_url = "https://proxy.golang.org"
+        go_pkg = "/".join(self.purl_details['fullparts']).replace(
+            'golang/', ''
+        )
+        if "@" in go_pkg:
+            go_pkg, version = go_pkg.split("@")
+        # Check if pkg exist
+        versions_url = f"{base_url}/{go_pkg}/@v/list"
+        response = requests.get(versions_url)
+        if response.status_code == 200:
+            versions = response.text.split()
+            versions.sort()
+            latest_version = versions[-1]
+            # If exist, and version attempt to download:
+            if version:
+                tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
+                response = requests.get(tarball_url)
+                # If fail, goes to latest
+                if response.status_code != 200:
+                    logging.info(f"Using {version} instead")
+                    version = latest_version
+                    tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
+            else:
+                logging.info(f"No version, using {version} instead")
+                version = latest_version
+                tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
+            full_url = tarball_url
         else:
-            full_url = f"https://{namespace}/{self.purl_details['name']}"
-            full_url = self.find_github_links(full_url)
-        # Default to main if no version is provided
-        version = self.purl_details.get('version', 'main')
-        return f"{full_url}.git", version
+            logging.error(f"No version available for {go_pkg}")
+            namespace = self.purl_details['namespace']
+            pkg_full = self.purl_details['fullparts'][2]
+            namespace = f"{namespace}/{pkg_full}"
+            if namespace in GOLANG_REPOS:
+                base_url = GOLANG_REPOS[namespace]
+                full_url = f"https://github.com/{base_url}"
+            else:
+                full_url = f"https://{namespace}/{self.purl_details['name']}"
+                full_url = self.find_github_links(full_url)
+                full_url = f"{full_url}.git"
+        return f"{full_url}", version
 
     def unpack(self):
         if self.temp_dir:
@@ -80,7 +119,16 @@ class GolangHandler(BaseHandler):
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
             if 'gzip' in mimetype:
+                extract_zip(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'zip' in mimetype:
+                extract_zip(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'tar' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'bzip2' in mimetype:
+                extract_bz2(package_file_path, self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")
             else:
                 logging.error(f"MimeType not supported {mimetype}")
@@ -96,7 +144,8 @@ class GolangHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
-        results['license'] = self.get_license(self.repo_url)
+        results['license'] = ''
+        # self.get_license(self.repo_url)
         self.results = results
 
     def generate_report(self):
@@ -148,14 +197,19 @@ class GolangHandler(BaseHandler):
                 self.purl_details['version'] = None
             if self.purl_details['version']:
                 version = self.purl_details['version']
-                subprocess.run(
-                    ["git", "-C", self.temp_dir, "checkout", version],
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+                try:
+                    subprocess.run(
+                        ["git", "-C", self.temp_dir, "checkout", version],
+                        check=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
+                except subprocess.CalledProcessError:
+                    logging.warning(
+                        f"Failed to checkout version {version}, "
+                        f"defaulting to master/main"
+                    )
             logging.info(f"Repository cloned successfully to {self.temp_dir}")
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone repository: {e}")
-            # shutil.rmtree(self.temp_dir)
             raise
