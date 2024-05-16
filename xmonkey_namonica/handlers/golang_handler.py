@@ -157,7 +157,11 @@ class GolangHandler(BaseHandler):
         if "proxy" in repo_url:
             info_url = repo_url.replace('.zip', '.info')
             license_files = self.results['license_files']
-            print(license_files[0])
+            if len(license_files) == 1:
+                license_file = license_files[0]
+                return license_file['spdx']
+            else:
+                return ''
         else:
             if repo_url.endswith('.git'):
                 repo_url = repo_url[:-4]
