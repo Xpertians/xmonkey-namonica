@@ -60,6 +60,7 @@ class GithubHandler(BaseHandler):
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
         results['license'] = self.get_license(self.repo_url)
+        results['url'] = self.repo_url[0]
         self.results = results
 
     def generate_report(self):

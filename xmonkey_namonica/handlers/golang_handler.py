@@ -146,6 +146,7 @@ class GolangHandler(BaseHandler):
         results['copyrights'] = copyhits
         self.results = results
         results['license'] = self.get_license(self.repo_url)
+        results['url'] = self.repo_url[0]
         self.results = results
 
     def generate_report(self):

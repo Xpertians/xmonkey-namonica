@@ -80,9 +80,10 @@ def main():
                     print(json.dumps(result, indent=4))
                 elif args.validate:
                     license = result['license']
+                    down_url = result['url']
                     if not license:
                         license = '-'
-                    str_line = f'"{purl}","{license}"'
+                    str_line = f'"{purl}","{license}","{down_url}"'
                     print(str_line)
                 else:
                     print(purl)

@@ -20,10 +20,12 @@ class GenericHandler(BaseHandler):
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
             if download_url:
+                self.repo_url = download_url
                 self.download_file(download_url, checksum)
                 logging.info(f"File downloaded in {self.temp_dir}")
                 self.unpack()
             elif vcs_url:
+                self.repo_url = vcs_url
                 self.clone_repository(vcs_url)
                 logging.info(f"Repo cloned to {self.temp_dir}")
             self.scan()
@@ -55,6 +57,7 @@ class GenericHandler(BaseHandler):
         results['copyrights'] = copyhits
         # Needs OSLiLi implementation
         results['license'] = ''
+        results['url'] = self.repo_url
         self.results = results
 
     def generate_report(self):

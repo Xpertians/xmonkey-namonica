@@ -9,6 +9,7 @@ from ..utils import download_file, temp_directory, extract_tar
 class PypiHandler(BaseHandler):
     def fetch(self):
         download_url = self.construct_download_url()
+        self.repo_url = download_url
         with temp_directory() as temp_dir:
             filename = (
                 f"{self.purl_details['name']}-"
@@ -48,6 +49,7 @@ class PypiHandler(BaseHandler):
         results['copyrights'] = copyhits
         pkg_name = self.purl_details['name']
         results['license'] = self.get_license(pkg_name)
+        results['url'] = self.repo_url
         self.results = results
 
     def generate_report(self):

@@ -16,6 +16,7 @@ from ..utils import extract_tar, extract_zip
 class GemHandler(BaseHandler):
     def fetch(self):
         repo_url = self.construct_repo_url()
+        self.repo_url = repo_url
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
             if 'rubygem' in repo_url:
@@ -100,6 +101,7 @@ class GemHandler(BaseHandler):
         results['copyrights'] = copyhits
         pkg_name = self.purl_details['name']
         results['license'] = self.get_license(pkg_name)
+        results['url'] = self.repo_url
         self.results = results
 
     def generate_report(self):
