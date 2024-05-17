@@ -54,6 +54,11 @@ def main():
         action="store_true",
         help="Print a full list of copyrights and license files"
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Print a list of PURLs and Licenses"
+    )
     args = parser.parse_args()
 
     try:
@@ -71,8 +76,16 @@ def main():
                 result = process_purl(purl)
                 results.append(result)
                 if args.full:
+                    print(purl)
                     print(json.dumps(result, indent=4))
+                elif args.validate:
+                    license = result['license']
+                    if not license:
+                        license = '-'
+                    str_line = f'"{purl}","{license}"'
+                    print(str_line)
                 else:
+                    print(purl)
                     copyrights = list(
                         set([entry['line'] for entry in result['copyrights']])
                     )
@@ -89,6 +102,7 @@ def main():
         if args.export:
             with open(args.export, "w") as f:
                 if args.full:
+                    f.write(purl)
                     f.write(json.dumps(results, indent=4))
                 else:
                     for result in results:
@@ -98,6 +112,7 @@ def main():
                                 for entry in result['copyrights']
                             )
                         )
+                        f.write(purl)
                         f.write("\n".join(copyrights))
                         licenses = list(
                             set(
