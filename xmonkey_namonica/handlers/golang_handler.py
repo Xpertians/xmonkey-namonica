@@ -104,6 +104,8 @@ class GolangHandler(BaseHandler):
             if namespace in GOLANG_REPOS:
                 base_url = GOLANG_REPOS[namespace]
                 full_url = f"https://github.com/{base_url}"
+            elif "github" in namespace:
+                full_url = f"https://{namespace}/{self.purl_details['name']}"
             else:
                 full_url = f"https://{namespace}/{self.purl_details['name']}"
                 full_url = self.find_github_links(full_url)
