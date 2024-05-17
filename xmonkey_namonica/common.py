@@ -118,6 +118,7 @@ class PackageManager:
                             if (
                                 "copyright " in clean_line
                                 and len(clean_line) <= 50
+                                and "yyyy" not in clean_line
                             ):
                                 clean_line = re.sub(pattern, "", clean_line)
                                 if (
