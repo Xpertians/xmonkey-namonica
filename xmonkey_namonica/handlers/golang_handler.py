@@ -69,7 +69,7 @@ class GolangHandler(BaseHandler):
                 self.base_url + self.purl_details['fullparts'][2] + "/"
             )
         }
-        base_url = "https://proxy.golang.org"
+        base_url = "https://goproxy.io"
         go_pkg = "/".join(self.purl_details['fullparts']).replace(
             'golang/', ''
         )
