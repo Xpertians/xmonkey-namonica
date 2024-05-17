@@ -97,7 +97,7 @@ class GolangHandler(BaseHandler):
                 tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
             full_url = tarball_url
         else:
-            logging.error(f"No version available for {go_pkg}")
+            logging.info(f"No version available for {go_pkg}")
             namespace = self.purl_details['namespace']
             pkg_full = self.purl_details['fullparts'][2]
             namespace = f"{namespace}/{pkg_full}"
