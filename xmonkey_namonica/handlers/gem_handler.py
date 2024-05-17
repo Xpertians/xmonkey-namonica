@@ -111,7 +111,6 @@ class GemHandler(BaseHandler):
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            print('data:', data)
             license_info = data.get('licenses') or data.get('license')
             if license_info:
                 if isinstance(license_info, list):
