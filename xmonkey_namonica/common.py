@@ -107,7 +107,7 @@ class PackageManager:
         with open(tfidf_data_path, 'rb') as f:
             _, _, _, _, vectorizer = pickle.load(f)
         copyrights = []
-        pattern = "[^0-9<>,.()@a-zA-Z-\s]+"
+        pattern = r"[^0-9<>,.()@a-zA-Z-\s]+"
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 file_path = os.path.join(root, file)

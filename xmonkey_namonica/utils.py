@@ -1,12 +1,12 @@
 import os
 import bz2
 import magic
+import shutil
 import requests
 import logging
 import zipfile
 import tarfile
 import tempfile
-import shutil
 from contextlib import contextmanager
 
 
@@ -68,6 +68,19 @@ def extract_bz2(file_path, extract_to):
     except OSError as e:
         logging.error(f"Failed to extract BZ2 file {file_path}: {e}")
         raise
+
+
+def recursive_extract(file_path, extract_to):
+    mime = magic.Magic(mime=True)
+    mimetype = mime.from_file(file_path)
+    if 'gzip' in mimetype or 'tar' in mimetype:
+        extract_tar(file_path, extract_to)
+    elif 'zip' in mimetype:
+        extract_zip(file_path, extract_to)
+    elif 'bzip2' in mimetype:
+        extract_bz2(file_path, extract_to)
+    else:
+        raise ValueError(f"Unsupported archive format: {mimetype}")
 
 
 def check_and_extract(path, extract_to):

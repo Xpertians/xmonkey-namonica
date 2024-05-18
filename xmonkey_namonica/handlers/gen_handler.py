@@ -1,5 +1,6 @@
 import os
 import magic
+import shutil
 import hashlib
 import logging
 import requests
