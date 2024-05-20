@@ -20,7 +20,7 @@ class GolangHandler(BaseHandler):
         self.repo_url = repo_url
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
-            if "proxy" in self.repo_url[0]:
+            if "goproxy" in self.repo_url[0]:
                 self.fetch_file(repo_url[0])
                 logging.info(f"File downloaded in {self.temp_dir}")
                 self.unpack()
