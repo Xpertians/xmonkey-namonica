@@ -76,7 +76,7 @@ def main():
                 result = process_purl(purl)
                 results.append(result)
                 if args.full:
-                    print(purl)
+                    result['purl'] = purl
                     print(json.dumps(result, indent=4))
                 elif args.validate:
                     license = result['license']
@@ -103,7 +103,7 @@ def main():
         if args.export:
             with open(args.export, "w") as f:
                 if args.full:
-                    f.write(purl)
+                    result['purl'] = purl
                     f.write(json.dumps(results, indent=4))
                 else:
                     for result in results:
