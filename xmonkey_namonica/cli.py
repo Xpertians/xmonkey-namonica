@@ -1,5 +1,6 @@
-import argparse
 import json
+import argparse
+from tqdm import tqdm
 from .handlers.gem_handler import GemHandler
 from .handlers.npm_handler import NpmHandler
 from .handlers.pypi_handler import PypiHandler
@@ -70,51 +71,54 @@ def main():
             purls = [args.input]
 
         results = []
-        for purl in purls:
+        for purl in tqdm(purls, desc="Processing PURLs", unit="purl"):
             purl = purl.strip()
             if purl:
                 result = process_purl(purl)
+                result['purl'] = purl
                 results.append(result)
-                if args.full:
-                    print(purl)
-                    print(json.dumps(result, indent=4))
-                elif args.validate:
-                    license = result['license']
-                    down_url = result['url']
-                    if not license:
-                        license = '-'
-                    str_line = f'"{purl}","{license}","{down_url}"'
-                    print(str_line)
-                else:
-                    print(purl)
-                    copyrights = list(
-                        set([entry['line'] for entry in result['copyrights']])
+
+        if args.full:
+            print(json.dumps(results, indent=4))
+        elif args.validate:
+            for result in results:
+                purl = result['purl']
+                license = result['license'] or '-'
+                down_url = result['url']
+                str_line = f'"{purl}","{license}","{down_url}"'
+                print(str_line)
+        else:
+            for result in results:
+                purl = result['purl']
+                print(purl)
+                copyrights = list(
+                    set([entry['line'] for entry in result['copyrights']])
+                )
+                print("\n".join(copyrights))
+                licenses = list(
+                    set(
+                        entry['content']
+                        for entry in result['license_files']
                     )
-                    print("\n".join(copyrights))
-                    licenses = list(
-                        set(
-                            entry['content']
-                            for entry in result['license_files']
-                        )
-                    )
-                    if licenses:
-                        print("\nLicense Content:\n" + "\n".join(licenses))
+                )
+                if licenses:
+                    print("\nLicense Content:\n" + "\n".join(licenses))
 
         if args.export:
             with open(args.export, "w") as f:
                 if args.full:
-                    f.write(purl)
                     f.write(json.dumps(results, indent=4))
                 else:
                     for result in results:
+                        purl = result['purl']
                         copyrights = list(
                             set(
                                 entry['line']
                                 for entry in result['copyrights']
                             )
                         )
-                        f.write(purl)
-                        f.write("\n".join(copyrights))
+                        f.write(purl + "\n")
+                        f.write("\n".join(copyrights) + "\n")
                         licenses = list(
                             set(
                                 entry['content']
@@ -122,9 +126,9 @@ def main():
                             )
                         )
                         if licenses:
-                            f.write(
-                                "\nLicense Content:\n" + "\n".join(licenses)
-                            )
+                            f.write("\nLicense Content:\n")
+                            f.write("\n".join(licenses))
+                            f.write("\n")
 
     except Exception as e:
         print(f"Error: {str(e)}")

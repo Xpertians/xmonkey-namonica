@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='xmonkey_namonica',
-    version='0.1.17',
+    version='0.1.18',
     author="Oscar Valenzuela",
     author_email="oscar.valenzuela.b@gmail.com",
     url='https://github.com/Xpertians/xmonkey-namonica',
@@ -34,5 +34,6 @@ setup(
         "python-magic",
         "beautifulsoup4",
         "oslili",
+        "tqdm",
     ],
 )
