@@ -38,7 +38,8 @@ class PackageManager:
             if len(path_parts) == 5:
                 result['name'] = path_parts[3]
                 result['version'] = None
-            if len(path_parts) <= 3:
+            if len(path_parts) <= 2:
+                print('purl:', purl)
                 raise ValueError(
                     "Invalid PURL format."
                 )

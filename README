@@ -1,0 +1,10 @@
+Xmonkey Namonica - Purl2Notices - OSS Attribution Generator
+==========================================
+
+Summary
+-------
+Xmonkey Namonica (xmonkey-namonica) is a Python tool created to facilitate the generation of Open Source Legal Notices, which contain copyright and license information from Open Source packages. The main goal of the tool is to provide a tool for developers to programmatically generate legal notices for the open-source software shipped in their projects, with fewer requirements and no friction.
+
+The tool uses a few other Xmonkey libraries under the hood, for example:
+* OSLiLi: Open Source License Identification Library, a tool that uses fuzzy hashing and ML Naive Bayesian Filter to identify licenses.
+* Python-ssdeep: the main ssdeep library that wraps ssdeep for Fuzzy Hashing.

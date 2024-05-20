@@ -75,17 +75,32 @@ class GolangHandler(BaseHandler):
         )
         if "@" in go_pkg:
             go_pkg, version = go_pkg.split("@")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+        }
         # Check if pkg exist
         versions_url = f"{base_url}/{go_pkg}/@v/list"
-        response = requests.get(versions_url)
-        if response.status_code == 200:
+        response = requests.get(versions_url, headers=headers)
+        if response.status_code == 403:
+            print(versions_url)
+            exit()
+        elif response.status_code == 200:
             versions = response.text.split()
             versions.sort()
             latest_version = versions[-1]
             # If exist, and version attempt to download:
             if version:
                 tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
-                response = requests.get(tarball_url)
+                response = requests.get(tarball_url, headers=headers)
                 # If fail, goes to latest
                 if response.status_code != 200:
                     logging.info(f"Using {version} instead")
@@ -183,7 +198,19 @@ class GolangHandler(BaseHandler):
                 return ''
 
     def fetch_file(self, url):
-        response = requests.get(url)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+        }
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             file_data = response.content
             package_file_path = os.path.join(
