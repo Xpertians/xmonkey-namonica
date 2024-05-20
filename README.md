@@ -151,3 +151,8 @@ $ python3 -m pip install "urllib3<2.0"
 ```
 
 If you still have trouble, please install Python 3.9+ from source. Here is an interesting guide that can help: https://techviewleo.com/how-to-install-python-on-amazon-linux-2/
+
+
+### ssdeep and fatal error: fuzzy.h
+
+If you can't install SSDEEP due an error related to missing fuzzy.h, please follow the recommendations described [here](https://github.com/Xpertians/xmonkey-namonica/issues/39)
