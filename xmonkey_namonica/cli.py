@@ -77,7 +77,8 @@ def main():
                 result = process_purl(purl)
                 result['purl'] = purl
                 results.append(result)
-
+        if args.validate:
+            args.full = None
         if args.full:
             print(json.dumps(results, indent=4))
         elif args.validate:
