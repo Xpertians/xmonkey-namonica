@@ -109,6 +109,13 @@ def main():
             with open(args.export, "w") as f:
                 if args.full:
                     f.write(json.dumps(results, indent=4))
+                elif args.validate:
+                    for result in results:
+                        purl = result['purl']
+                        license = result['license'] or '-'
+                        down_url = result['url']
+                        str_line = f'"{purl}","{license}","{down_url}"'
+                        f.write(str_line + "\n")
                 else:
                     for result in results:
                         purl = result['purl']
