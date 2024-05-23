@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import magic
 import pickle
 import logging
 from pkg_resources import resource_filename
@@ -75,25 +76,42 @@ class PackageManager:
                 ):
                     file_path = os.path.join(root, file)
                     file_text = PackageManager.read_file_content(file_path)
-                    spdx_code, proba = identifier.identify_license(
-                        file_text
-                    )
-                    found_files.append({
-                        "file": file_path,
-                        "content": file_text,
-                        "spdx": spdx_code,
-                        "oslili": proba,
-                    })
+                    if file_text:
+                        spdx_code, proba = identifier.identify_license(
+                            file_text
+                        )
+                        found_files.append({
+                            "file": file_path,
+                            "content": file_text,
+                            "spdx": spdx_code,
+                            "oslili": proba,
+                        })
         return found_files
 
     @staticmethod
-    def read_file_content(file_path):
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                return file.read()
-        except Exception as e:
-            print(f"Error reading file {file_path}: {str(e)}")
-            raise
+    def is_readable_text_file(file_path):
+        mime = magic.Magic(mime=True)
+        mimetype = mime.from_file(file_path)
+        if mimetype:
+            if mimetype.startswith('text'):
+                return True
+            if mimetype == 'application/octet-stream':
+                return True
+        return False
+
+    @staticmethod
+    def read_file_content(file_path, encodings=['utf-8', 'iso-8859-1']):
+        if PackageManager.is_readable_text_file(file_path):
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as file:
+                        return file.read()
+                except UnicodeDecodeError:
+                    continue
+            return None
+        else:
+            logging.info(f"read_file_content failed {file_path}")
+            return None
 
     @staticmethod
     def scan_for_copyright(temp_dir):
@@ -114,33 +132,36 @@ class PackageManager:
         for root, _, files in os.walk(temp_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            clean_line = line.strip().lower()
-                            if (
-                                "copyright " in clean_line
-                                and len(clean_line) <= 50
-                                and "yyyy" not in clean_line
-                            ):
-                                clean_line = re.sub(pattern, "", clean_line)
+                if PackageManager.is_readable_text_file(file_path):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            for line in f:
+                                clean_line = line.strip().lower()
                                 if (
-                                    clean_line.startswith('copyright')
-                                    or " copyright" in clean_line
+                                    "copyright " in clean_line
+                                    and len(clean_line) <= 50
+                                    and "yyyy" not in clean_line
                                 ):
-                                    input_tfidf = vectorizer.transform(
-                                        [clean_line]
+                                    clean_line = re.sub(
+                                        pattern, "", clean_line
                                     )
-                                    prediction = classifier.predict(
-                                        input_tfidf
-                                    )[0]
-                                    if 'copyright' in prediction:
-                                        copyrights.append({
-                                            "file": file_path,
-                                            "line": clean_line
-                                        })
-                except UnicodeDecodeError:
-                    continue
+                                    if (
+                                        clean_line.startswith('copyright')
+                                        or " copyright" in clean_line
+                                    ):
+                                        input_tfidf = vectorizer.transform(
+                                            [clean_line]
+                                        )
+                                        prediction = classifier.predict(
+                                            input_tfidf
+                                        )[0]
+                                        if 'copyright' in prediction:
+                                            copyrights.append({
+                                                "file": file_path,
+                                                "line": clean_line
+                                            })
+                    except UnicodeDecodeError:
+                        continue
         return copyrights
 
     @staticmethod
