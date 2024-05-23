@@ -40,7 +40,6 @@ class GenericHandler(BaseHandler):
             )
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
-            print('mime:', mimetype)
             if 'gzip' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")

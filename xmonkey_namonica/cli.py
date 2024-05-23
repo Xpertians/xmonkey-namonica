@@ -47,7 +47,7 @@ def main():
     parser.add_argument(
         "--export",
         type=str,
-        help="Path to export the output as a text file",
+        help="Path to export the output to a file",
         default=None
     )
     parser.add_argument(
@@ -56,7 +56,7 @@ def main():
         help="Print a full list of copyrights and license files"
     )
     parser.add_argument(
-        "--validate",
+        "--ospi",
         action="store_true",
         help="Print a list of PURLs and Licenses"
     )
@@ -77,11 +77,11 @@ def main():
                 result = process_purl(purl)
                 result['purl'] = purl
                 results.append(result)
-        if args.validate:
+        if args.ospi:
             args.full = None
         if args.full:
             print(json.dumps(results, indent=4))
-        elif args.validate:
+        elif args.ospi:
             for result in results:
                 purl = result['purl']
                 license = result['license'] or '-'
@@ -109,7 +109,7 @@ def main():
             with open(args.export, "w") as f:
                 if args.full:
                     f.write(json.dumps(results, indent=4))
-                elif args.validate:
+                elif args.ospi:
                     for result in results:
                         purl = result['purl']
                         license = result['license'] or '-'

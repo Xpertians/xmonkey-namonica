@@ -6,6 +6,26 @@ The tool uses a few other Xmonkey libraries under the hood, for example:
 * OSLiLi: Open Source License Identification Library, a tool that uses fuzzy hashing and ML Naive Bayesian Filter to identify licenses.
 * Python-ssdeep: the main ssdeep library that wraps ssdeep for Fuzzy Hashing.
 
+## Usage
+
+You can generate a notices file including copyright information by running the tool against a PURL or an Open Source Package Inventory (OSPI) file (for  multiple PURLs):
+
+```
+$xmonkey-namonica "pkg:{ecosystem}/[{namespace}/]{component_name}@{version}[?{qualifier}={value}]"
+```
+
+```
+$xmonkey-namonica ospi.txt
+```
+
+### Advanced Options
+```
+options:
+  --export EXPORT  Path to export the output to a file
+  --full           Print a full list of copyrights and license files
+  --validate       Print a list of PURLs and Licenses
+```
+
 ## Package URL (purl)
 PURL is a single URL parameter that uses a common industry standard structure to identify a package (Software). See the [PURL Spec](https://github.com/package-url/purl-spec) project for details on the specification's structure. In some cases, xmonkey-namonica may deviate from the purl spec standard to precisely identify components used in your application, like when you must submit a Compliance Tarball for Copyleft licenses.
 
