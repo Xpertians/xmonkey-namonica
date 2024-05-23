@@ -11,12 +11,13 @@ from contextlib import contextmanager
 
 
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
 
 def download_file(url, dest):
+    logging.info(f"download_file {url} to {dest}")
     try:
         with requests.get(url, stream=True) as response:
             response.raise_for_status()
@@ -30,6 +31,7 @@ def download_file(url, dest):
 
 
 def extract_zip(file_path, extract_to):
+    logging.info(f"extract_zip {file_path} to {extract_to}")
     try:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(extract_to)
@@ -41,6 +43,7 @@ def extract_zip(file_path, extract_to):
 
 
 def extract_tar(file_path, extract_to):
+    logging.info(f"extract_tar {file_path} to {extract_to}")
     try:
         with tarfile.open(file_path, 'r:*') as tar_ref:
             tar_ref.extractall(extract_to)
@@ -52,6 +55,7 @@ def extract_tar(file_path, extract_to):
 
 
 def extract_bz2(file_path, extract_to):
+    logging.info(f"extract_bz2 {file_path} to {extract_to}")
     try:
         if not os.path.exists(extract_to):
             os.makedirs(extract_to)
@@ -71,6 +75,7 @@ def extract_bz2(file_path, extract_to):
 
 
 def recursive_extract(file_path, extract_to):
+    logging.info(f"Recursive Extract {file_path} to {extract_to}")
     mime = magic.Magic(mime=True)
     mimetype = mime.from_file(file_path)
     if 'gzip' in mimetype or 'tar' in mimetype:
@@ -84,6 +89,7 @@ def recursive_extract(file_path, extract_to):
 
 
 def check_and_extract(path, extract_to):
+    logging.info(f"check_and_extract {path} to {extract_to}")
     if os.path.isdir(path):
         for root, dirs, files in os.walk(path):
             for file in files:

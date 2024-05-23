@@ -8,7 +8,8 @@ import subprocess
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
-from ..utils import download_file, temp_directory, extract_tar
+from ..utils import download_file, temp_directory, check_and_extract
+from ..utils import extract_zip, extract_tar, extract_bz2
 
 
 class GenericHandler(BaseHandler):
@@ -39,8 +40,20 @@ class GenericHandler(BaseHandler):
             )
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
+            print('mime:', mimetype)
             if 'gzip' in mimetype:
                 extract_tar(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'tar' in mimetype:
+                extract_tar(package_file_path, self.temp_dir)
+                check_and_extract(self.temp_dir, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'zip' in mimetype:
+                extract_zip(package_file_path, self.temp_dir)
+                logging.info(f"Unpacked package in {self.temp_dir}")
+            elif 'bzip2' in mimetype:
+                extract_bz2(package_file_path, self.temp_dir)
+                check_and_extract(self.temp_dir, self.temp_dir)
                 logging.info(f"Unpacked package in {self.temp_dir}")
             else:
                 logging.error(f"MimeType not supported {mimetype}")

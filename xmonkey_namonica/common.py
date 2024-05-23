@@ -2,6 +2,7 @@ import os
 import re
 import json
 import pickle
+import logging
 from pkg_resources import resource_filename
 from oslili import LicenseAndCopyrightIdentifier
 from urllib.parse import unquote, urlparse, parse_qs
@@ -12,6 +13,7 @@ from .utils import download_file, temp_directory, extract_zip, extract_tar
 class PackageManager:
     @staticmethod
     def parse_purl(purl):
+        logging.info(f"parse_purl {purl}")
         result = {}
         url = urlparse(purl)
         if url.scheme != 'pkg':
