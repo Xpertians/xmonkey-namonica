@@ -47,8 +47,7 @@ class NpmHandler(BaseHandler):
         results['license_files'] = files
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
-        pkg_name = self.purl_details['name']
-        results['license'] = self.get_license(pkg_name)
+        results['license'] = self.get_license()
         results['url'] = self.repo_url
         self.results = results
 
@@ -56,8 +55,8 @@ class NpmHandler(BaseHandler):
         logging.info("Generating report based on the scanned data...")
         return self.results
 
-    def get_license(self, pkg_name):
-        url = f"https://registry.npmjs.org/{pkg_name}"
+    def get_license(self):
+        url = f"https://registry.npmjs.org/{self.get_pkg_name()}"
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
@@ -69,14 +68,17 @@ class NpmHandler(BaseHandler):
             return ''
 
     def construct_download_url(self):
-        namespace = (
+        return (
+            f"https://registry.npmjs.org/"
+            f"{self.get_pkg_name()}/-/"
+            f"{self.purl_details['name']}-{self.purl_details['version']}.tgz"
+        )
+
+    def get_pkg_name(self):
+        return (
             self.purl_details['namespace'].replace('%40', '@') + '/' +
             self.purl_details['name']
             if self.purl_details['namespace']
             else self.purl_details['name']
         )
-        return (
-            f"https://registry.npmjs.org/"
-            f"{namespace}/-/"
-            f"{self.purl_details['name']}-{self.purl_details['version']}.tgz"
-        )
+
