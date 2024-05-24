@@ -3,6 +3,7 @@ xmonkey-namonica "pkg:generic/openssl@1.1.10g?download_url=https://openssl.org/s
 xmonkey-namonica "pkg:github/package-url/purl-spec@b33dda1cf4515efa8eabbbe8e9b140950805f845" --full
 xmonkey-namonica "pkg:npm/tslib@2.6.2/" --full
 xmonkey-namonica "pkg:nuget/Nirvana.MongoProvider@2.1.154" --full
+xmonkey-namonica "pkg:nuget/AWSSDK.APIGateway@3.7.2.70" --full
 xmonkey-namonica "pkg:pypi/flask@3.0.3/" --full
 xmonkey-namonica "pkg:cargo/grin@1.0.0?type=crate" --full
 xmonkey-namonica "pkg:golang/github.com/mailru/easyjson@v0.7.7" --full
