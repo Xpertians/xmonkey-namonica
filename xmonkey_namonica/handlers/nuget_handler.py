@@ -65,7 +65,19 @@ class NugetHandler(BaseHandler):
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
-            l_vdata = data['items'][-1]['items'][-1]['catalogEntry']
+            reg_page_data = data['items'][-1]
+            reg_data = None
+            if 'items' in reg_page_data:
+                reg_data = reg_page_data
+            else:
+                reg_leaf_url = reg_page_data['@id']
+                response = requests.get(reg_leaf_url)
+                if response.status_code == 200:
+                    reg_data = response.json()
+                else:
+                    logging.error("Can't obtain data from Nuget Registry")
+                    return ''
+            l_vdata = reg_data['items'][-1]['catalogEntry']
             license_expression = l_vdata.get('licenseExpression', '')
             license_url = l_vdata.get('licenseUrl', '')
             if not license_expression:
