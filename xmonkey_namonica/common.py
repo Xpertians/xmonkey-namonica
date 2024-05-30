@@ -66,20 +66,27 @@ class PackageManager:
             return temp_dir
 
     @staticmethod
-    def scan_for_files(temp_dir: str, patterns: List[str]) -> List[Dict[str, str]]:
+    def scan_for_files(
+        temp_dir: str,
+        patterns: List[str]
+    ) -> List[Dict[str, str]]:
         identifier = LicenseAndCopyrightIdentifier()
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
             # Exclude .git directories
             dirs[:] = [d for d in dirs if d.lower() != '.git']
             for file in files:
-                if any(re.search(pattern, file, re.IGNORECASE) for pattern in patterns):
+                if any(
+                    re.search(pattern, file, re.IGNORECASE)
+                    for pattern in patterns
+                ):
                     file_path = os.path.join(root, file)
                     try:
                         file_text = PackageManager.read_file_content(file_path)
-                    
                         if file_text:
-                            spdx_code, proba = identifier.identify_license(file_text)
+                            spdx_code, proba = identifier.identify_license(
+                                file_text
+                            )
                             found_files.append({
                                 "file": file_path,
                                 "content": file_text,
@@ -87,7 +94,9 @@ class PackageManager:
                                 "oslili": proba,
                             })
                     except Exception as e:
-                        logging.error(f"Error processing file {file_path}: {e}")
+                        logging.error(
+                            f"Error processing file {file_path}: {e}"
+                        )
         return found_files
 
     @staticmethod
@@ -117,8 +126,12 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir: str) -> List[Dict[str, str]]:
-        naive_bayes_model_path = resource_filename(__name__, 'datasets/naive_bayes_model.pkl')
-        tfidf_data_path = resource_filename(__name__, 'datasets/tfidf_data.pkl')
+        naive_bayes_model_path = resource_filename(
+            __name__, 'datasets/naive_bayes_model.pkl'
+        )
+        tfidf_data_path = resource_filename(
+            __name__, 'datasets/tfidf_data.pkl'
+        )
         with open(naive_bayes_model_path, 'rb') as f:
             classifier = pickle.load(f)
         with open(tfidf_data_path, 'rb') as f:
@@ -135,11 +148,24 @@ class PackageManager:
                         with open(file_path, 'r', encoding='utf-8') as f:
                             for line in f:
                                 clean_line = line.strip().lower()
-                                if "copyright " in clean_line and len(clean_line) <= 50 and "yyyy" not in clean_line:
-                                    clean_line = re.sub(pattern, "", clean_line)
-                                    if clean_line.startswith('copyright') or " copyright" in clean_line:
-                                        input_tfidf = vectorizer.transform([clean_line])
-                                        prediction = classifier.predict(input_tfidf)[0]
+                                if (
+                                    "copyright " in clean_line and
+                                    len(clean_line) <= 50 and
+                                    "yyyy" not in clean_line
+                                ):
+                                    clean_line = re.sub(
+                                        pattern, "", clean_line
+                                    )
+                                    if (
+                                        clean_line.startswith('copyright') or
+                                        " copyright" in clean_line
+                                    ):
+                                        input_tfidf = vectorizer.transform(
+                                            [clean_line]
+                                        )
+                                        prediction = classifier.predict(
+                                            input_tfidf
+                                        )[0]
                                         if 'copyright' in prediction:
                                             copyrights.append({
                                                 "file": file_path,
