@@ -81,4 +81,3 @@ class NpmHandler(BaseHandler):
             if self.purl_details['namespace']
             else self.purl_details['name']
         )
-

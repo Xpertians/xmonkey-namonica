@@ -4,6 +4,7 @@ import json
 import magic
 import pickle
 import logging
+from typing import List, Dict
 from pkg_resources import resource_filename
 from oslili import LicenseAndCopyrightIdentifier
 from urllib.parse import unquote, urlparse, parse_qs
@@ -65,27 +66,37 @@ class PackageManager:
             return temp_dir
 
     @staticmethod
-    def scan_for_files(temp_dir, patterns):
+    def scan_for_files(
+        temp_dir: str,
+        patterns: List[str]
+    ) -> List[Dict[str, str]]:
         identifier = LicenseAndCopyrightIdentifier()
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
+            # Exclude .git directories
+            dirs[:] = [d for d in dirs if d.lower() != '.git']
             for file in files:
                 if any(
-                    re.match(pattern, file, re.IGNORECASE)
+                    re.search(pattern, file, re.IGNORECASE)
                     for pattern in patterns
                 ):
                     file_path = os.path.join(root, file)
-                    file_text = PackageManager.read_file_content(file_path)
-                    if file_text:
-                        spdx_code, proba = identifier.identify_license(
-                            file_text
+                    try:
+                        file_text = PackageManager.read_file_content(file_path)
+                        if file_text:
+                            spdx_code, proba = identifier.identify_license(
+                                file_text
+                            )
+                            found_files.append({
+                                "file": file_path,
+                                "content": file_text,
+                                "spdx": spdx_code,
+                                "oslili": proba,
+                            })
+                    except Exception as e:
+                        logging.error(
+                            f"Error processing file {file_path}: {e}"
                         )
-                        found_files.append({
-                            "file": file_path,
-                            "content": file_text,
-                            "spdx": spdx_code,
-                            "oslili": proba,
-                        })
         return found_files
 
     @staticmethod
@@ -114,14 +125,12 @@ class PackageManager:
             return None
 
     @staticmethod
-    def scan_for_copyright(temp_dir):
+    def scan_for_copyright(temp_dir: str) -> List[Dict[str, str]]:
         naive_bayes_model_path = resource_filename(
-            __name__,
-            'datasets/naive_bayes_model.pkl'
+            __name__, 'datasets/naive_bayes_model.pkl'
         )
         tfidf_data_path = resource_filename(
-            __name__,
-            'datasets/tfidf_data.pkl'
+            __name__, 'datasets/tfidf_data.pkl'
         )
         with open(naive_bayes_model_path, 'rb') as f:
             classifier = pickle.load(f)
@@ -129,7 +138,9 @@ class PackageManager:
             _, _, _, _, vectorizer = pickle.load(f)
         copyrights = []
         pattern = r"[^0-9<>,.()@a-zA-Z-\s]+"
-        for root, _, files in os.walk(temp_dir):
+        for root, dirs, files in os.walk(temp_dir):
+            # Exclude .git directories
+            dirs[:] = [d for d in dirs if d.lower() != '.git']
             for file in files:
                 file_path = os.path.join(root, file)
                 if PackageManager.is_readable_text_file(file_path):
@@ -138,16 +149,16 @@ class PackageManager:
                             for line in f:
                                 clean_line = line.strip().lower()
                                 if (
-                                    "copyright " in clean_line
-                                    and len(clean_line) <= 50
-                                    and "yyyy" not in clean_line
+                                    "copyright " in clean_line and
+                                    len(clean_line) <= 50 and
+                                    "yyyy" not in clean_line
                                 ):
                                     clean_line = re.sub(
                                         pattern, "", clean_line
                                     )
                                     if (
-                                        clean_line.startswith('copyright')
-                                        or " copyright" in clean_line
+                                        clean_line.startswith('copyright') or
+                                        " copyright" in clean_line
                                     ):
                                         input_tfidf = vectorizer.transform(
                                             [clean_line]
