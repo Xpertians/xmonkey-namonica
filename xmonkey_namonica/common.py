@@ -4,6 +4,7 @@ import json
 import magic
 import pickle
 import logging
+from typing import List, Dict
 from pkg_resources import resource_filename
 from oslili import LicenseAndCopyrightIdentifier
 from urllib.parse import unquote, urlparse, parse_qs
@@ -65,27 +66,27 @@ class PackageManager:
             return temp_dir
 
     @staticmethod
-    def scan_for_files(temp_dir, patterns):
+    def scan_for_files(temp_dir: str, patterns: List[str]) -> List[Dict[str, str]]:
         identifier = LicenseAndCopyrightIdentifier()
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
             for file in files:
-                if any(
-                    re.match(pattern, file, re.IGNORECASE)
-                    for pattern in patterns
-                ):
+                if any(re.search(pattern, file, re.IGNORECASE) for pattern in patterns):
                     file_path = os.path.join(root, file)
-                    file_text = PackageManager.read_file_content(file_path)
-                    if file_text:
-                        spdx_code, proba = identifier.identify_license(
-                            file_text
-                        )
-                        found_files.append({
-                            "file": file_path,
-                            "content": file_text,
-                            "spdx": spdx_code,
-                            "oslili": proba,
-                        })
+                
+                    try:
+                        file_text = PackageManager.read_file_content(file_path)
+                    
+                        if file_text:
+                            spdx_code, proba = identifier.identify_license(file_text)
+                            found_files.append({
+                                "file": file_path,
+                                "content": file_text,
+                                "spdx": spdx_code,
+                                "oslili": proba,
+                            })
+                    except Exception as e:
+                        logging.error(f"Error processing file {file_path}: {e}")
         return found_files
 
     @staticmethod
