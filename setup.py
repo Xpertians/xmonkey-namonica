@@ -5,7 +5,7 @@ with open("README", "r", encoding="utf-8") as fh:
 
 setup(
     name='xmonkey_namonica',
-    version='0.1.27',
+    version='0.1.28',
     description="Purl2Notices - OSS Attribution Generator",
     long_description=long_description,
     long_description_content_type='text/x-rst',
@@ -21,20 +21,13 @@ setup(
     python_requires='>=3.6',
     packages=find_packages(),
     include_package_data=True,
-    package_data={
-        'xmonkey_namonica': ['datasets/*.pkl'],
-    },
+    package_data={},
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
     ],
     install_requires=[
-        "spacy",
-        "nltk",
-        "scikit-learn==1.4.2",
-        "pandas",
-        "numpy",
         "requests",
         "urllib3",
         "python-magic",
