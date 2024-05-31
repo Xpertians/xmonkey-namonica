@@ -126,16 +126,7 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir: str) -> List[Dict[str, str]]:
-        naive_bayes_model_path = resource_filename(
-            __name__, 'datasets/naive_bayes_model.pkl'
-        )
-        tfidf_data_path = resource_filename(
-            __name__, 'datasets/tfidf_data.pkl'
-        )
-        with open(naive_bayes_model_path, 'rb') as f:
-            classifier = pickle.load(f)
-        with open(tfidf_data_path, 'rb') as f:
-            _, _, _, _, vectorizer = pickle.load(f)
+        identifier = LicenseAndCopyrightIdentifier()
         copyrights = []
         pattern = r"[^0-9<>,.()@a-zA-Z-\s]+"
         for root, dirs, files in os.walk(temp_dir):
@@ -160,17 +151,14 @@ class PackageManager:
                                         clean_line.startswith('copyright') or
                                         " copyright" in clean_line
                                     ):
-                                        input_tfidf = vectorizer.transform(
-                                            [clean_line]
-                                        )
-                                        prediction = classifier.predict(
-                                            input_tfidf
-                                        )[0]
-                                        if 'copyright' in prediction:
-                                            copyrights.append({
-                                                "file": file_path,
-                                                "line": clean_line
-                                            })
+                                        copyhits = identifier.copyright_extraction(clean_line)
+                                        if copyhits:
+                                            prediction = copyhits[0]['prediction']
+                                            if 'copyright' in prediction:
+                                                copyrights.append({
+                                                    "file": file_path,
+                                                    "line": clean_line
+                                                })
                     except UnicodeDecodeError:
                         continue
         return copyrights
