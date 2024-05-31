@@ -23,7 +23,7 @@ $xmonkey-namonica ospi.txt
 options:
   --export EXPORT  Path to export the output to a file
   --full           Print a full list of copyrights and license files
-  --validate       Print a list of PURLs and Licenses
+  --ospi           Print a list of PURLs and Licenses
 ```
 
 ## Package URL (purl)
