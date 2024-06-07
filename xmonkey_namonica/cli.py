@@ -32,7 +32,7 @@ def process_purl(purl):
     elif "pkg:github" in purl:
         handler = GithubHandler(purl)
     else:
-        raise ValueError("Unsupported PURL type")
+        raise ValueError(f"Unsupported PURL type {purl}")
     handler.fetch()
     return handler.generate_report()
 

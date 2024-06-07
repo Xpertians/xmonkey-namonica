@@ -82,25 +82,24 @@ class PypiHandler(BaseHandler):
             else self.purl_details['name']
         )
         iniName = namespace[0].lower()
-        url = (
+        predefined_url = (
             f"https://pypi.python.org/packages/source/{iniName}/{namespace}/"
             f"{self.purl_details['name']}-"
             f"{self.purl_details['version']}.tar.gz"
         )
-        # Probably this should be sorted to use the json url first.
-        response = requests.head(url)
-        if response.status_code != 200:
-            package_info_url = (
-                f"https://pypi.org/pypi/{self.purl_details['name']}/json"
+        package_info_url = (
+            f"https://pypi.org/pypi/{self.purl_details['name']}/json"
+        )
+        package_info_response = requests.get(package_info_url)
+        if package_info_response.status_code == 200:
+            package_info = package_info_response.json()
+            tar_gz_url = next(
+                (url_info['url'] for url_info in package_info['urls']
+                 if url_info['url'].endswith('.tar.gz')),
+                None
             )
-            package_info_response = requests.get(package_info_url)
-            if package_info_response.status_code == 200:
-                package_info = package_info_response.json()
-                url = package_info['urls'][1]['url']
-                print('url:', url)
-            else:
-                raise Exception(
-                    f"Could not retrieve package information from PyPI for "
-                    f"{self.purl_details['name']}"
-                )
-        return url
+            if tar_gz_url:
+                response = requests.head(tar_gz_url)
+                if response.status_code == 200:
+                    return tar_gz_url
+        return predefined_url
