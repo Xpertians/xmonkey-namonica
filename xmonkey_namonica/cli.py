@@ -61,7 +61,6 @@ def main():
         help="Print a list of PURLs and Licenses"
     )
     args = parser.parse_args()
-
     try:
         # Check if input is a file
         if args.input.endswith(".txt"):
@@ -71,6 +70,7 @@ def main():
             purls = [args.input]
 
         results = []
+        fnd_licenses = []
         for purl in tqdm(purls, desc="Processing PURLs", unit="purl"):
             purl = purl.strip()
             if purl:

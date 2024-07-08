@@ -52,6 +52,14 @@ class NpmHandler(BaseHandler):
         self.results = results
 
     def generate_report(self):
+        if not self.results['license']:
+            fnd_licenses = set()
+            for entry in self.results.get('license_files', []):
+                if 'spdx' in entry and entry['spdx']:
+                    fnd_licenses.add(str(entry['spdx']))
+            if not fnd_licenses:
+                fnd_licenses.add('-')
+            self.results['license'] = ', '.join(fnd_licenses)
         logging.info("Generating report based on the scanned data...")
         return self.results
 
