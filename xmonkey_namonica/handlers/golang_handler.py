@@ -21,13 +21,21 @@ class GolangHandler(BaseHandler):
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
             if "goproxy" in self.repo_url[0]:
-                self.fetch_file(repo_url[0])
-                logging.info(f"File downloaded in {self.temp_dir}")
-                self.unpack()
-            else:
+                response = self.fetch_file(repo_url[0])
+                if response == 200:
+                    logging.info(f"File downloaded in {self.temp_dir}")
+                    self.unpack()
+                    self.scan()
+                else:
+                    logging.info(f"URL {repo_url[0]} not supported")
+                    exit()
+            elif "github" in self.repo_url[0]:
                 self.clone_repo(repo_url)
                 logging.info(f"Repo cloned to {self.temp_dir}")
-            self.scan()
+                self.scan()
+            else:
+                logging.info(f"URL {repo_url[0]} not supported")
+                exit()
 
     def find_github_links(self, url):
         try:
@@ -65,6 +73,7 @@ class GolangHandler(BaseHandler):
             "golang.org/x/crypto": "golang/crypto",
             "k8s.io/kubernetes": "kubernetes/kubernetes",
             "k8s.io/client-go": "kubernetes/client-go",
+            "go.opentelemetry.io/contrib": "open-telemetry/opentelemetry-go",
             "github.com": (
                 self.base_url + self.purl_details['fullparts'][2] + "/"
             )
@@ -240,8 +249,7 @@ class GolangHandler(BaseHandler):
             with open(package_file_path, "wb") as file:
                 file.write(file_data)
             logging.info("File downloaded successfully.")
-        else:
-            raise ConnectionError("Failed to download the file.")
+        return response.status_code
 
     def clone_repo(self, repo_url):
         repo = repo_url[0]
