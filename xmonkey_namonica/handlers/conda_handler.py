@@ -18,11 +18,23 @@ class CondaHandler(BaseHandler):
                 temp_dir,
                 self.conda_pkg
             )
-            download_file(download_url, package_file_path)
-            logging.info(f"Downloaded package to {package_file_path}")
-            self.temp_dir = temp_dir
-            self.unpack()
-            self.scan()
+            rst = download_file(download_url, package_file_path)
+            if rst:
+                logging.info(f"Downloaded package to {package_file_path}")
+                self.temp_dir = temp_dir
+                self.unpack()
+                self.scan()
+            else:
+                self.placehldr()
+
+    def placehldr(self):
+        results = {}
+        logging.info("Placeholder results...")
+        results['license_files'] = {}
+        results['copyrights'] = {}
+        results['license'] = 'HTTP-404'
+        results['url'] = self.repo_url
+        self.results = results
 
     def unpack(self):
         if self.temp_dir:

@@ -26,8 +26,7 @@ class PypiHandler(BaseHandler):
                 self.unpack()
                 self.scan()
             else:
-                print('attempt false')
-                exit()
+                self.placehldr()
 
     def unpack(self):
         if self.temp_dir:
@@ -41,6 +40,15 @@ class PypiHandler(BaseHandler):
             )
             extract_tar(package_file_path, self.temp_dir)
             logging.info(f"Unpacked package in {self.temp_dir}")
+
+    def placehldr(self):
+        results = {}
+        logging.info("Placeholder results...")
+        results['license_files'] = {}
+        results['copyrights'] = {}
+        results['license'] = 'HTTP-404'
+        results['url'] = self.repo_url
+        self.results = results
 
     def scan(self):
         results = {}

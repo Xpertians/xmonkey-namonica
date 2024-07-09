@@ -37,6 +37,15 @@ class GolangHandler(BaseHandler):
                 logging.info(f"URL {repo_url[0]} not supported")
                 exit()
 
+    def placehldr(self):
+        results = {}
+        logging.info("Placeholder results...")
+        results['license_files'] = {}
+        results['copyrights'] = {}
+        results['license'] = 'HTTP-404'
+        results['url'] = self.repo_url
+        self.results = results
+
     def find_github_links(self, url):
         try:
             response = requests.get(url)
