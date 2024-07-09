@@ -19,11 +19,15 @@ class PypiHandler(BaseHandler):
                 temp_dir,
                 filename
             )
-            download_file(download_url, package_file_path)
-            logging.info(f"Downloaded package to {package_file_path}")
-            self.temp_dir = temp_dir
-            self.unpack()
-            self.scan()
+            rst = download_file(download_url, package_file_path)
+            if rst:
+                logging.info(f"Downloaded package to {package_file_path}")
+                self.temp_dir = temp_dir
+                self.unpack()
+                self.scan()
+            else:
+                print('attempt false')
+                exit()
 
     def unpack(self):
         if self.temp_dir:

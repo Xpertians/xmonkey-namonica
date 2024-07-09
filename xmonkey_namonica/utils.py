@@ -25,9 +25,10 @@ def download_file(url, dest):
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
         logging.info(f"Downloaded file from {url} to {dest}")
+        return True
     except requests.RequestException as e:
         logging.error(f"Failed to download file from {url}: {e}")
-        raise
+        return False
 
 
 def extract_zip(file_path, extract_to):
