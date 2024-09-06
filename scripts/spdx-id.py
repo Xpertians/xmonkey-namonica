@@ -2,10 +2,11 @@ import os
 import json
 import re
 import requests
-from collections import Counter
+from collections import Counter, defaultdict
 
 SPDX_LICENSES_INDEX_URL = "https://raw.githubusercontent.com/spdx/license-list-data/main/json/licenses.json"
 PATTERN_FILE = 'spdx_license_patterns.json'
+EXCLUSION_FILE = 'spdx_exclusions.json'
 
 def download_spdx_licenses(output_file='spdx_licenses.json'):
     """ Download all SPDX licenses and store them locally in a single JSON file """
@@ -52,9 +53,10 @@ def load_spdx_licenses(local_file='spdx_licenses.json'):
     with open(local_file, 'r') as f:
         return json.load(f)
 
-def generate_license_patterns(spdx_licenses, output_file=PATTERN_FILE):
-    """ Generate patterns dynamically from the SPDX license data and store them in a file """
+def generate_license_patterns_and_exclusions(spdx_licenses, pattern_file=PATTERN_FILE, exclusion_file=EXCLUSION_FILE):
+    """ Generate patterns and exclusions dynamically from the SPDX license data and store them in files """
     license_patterns = {}
+    pattern_to_license = defaultdict(list)
 
     for license_data in spdx_licenses:
         license_id = license_data['licenseId']
@@ -74,46 +76,127 @@ def generate_license_patterns(spdx_licenses, output_file=PATTERN_FILE):
         # Make all patterns case-insensitive by storing them in lowercase
         patterns = [pattern.lower() for pattern in patterns]
         
-        # Ensure no pattern collisions by checking the length of the patterns
-        if license_id not in license_patterns:
-            license_patterns[license_id] = patterns
-        else:
-            # Add non-duplicate patterns to the existing license entry
-            license_patterns[license_id] = list(set(license_patterns[license_id] + patterns))
+        # Store the patterns for the current license and track the license associated with each pattern
+        license_patterns[license_id] = patterns
+        for pattern in patterns:
+            pattern_to_license[pattern].append(license_id)
 
-    # Save the generated patterns to a JSON file
-    with open(output_file, 'w') as f:
+    # Generate exclusions for licenses based on shared patterns
+    exclusions = {}
+    for license_id, patterns in license_patterns.items():
+        exclusion_patterns = set()
+        for pattern in patterns:
+            if len(pattern_to_license[pattern]) > 1:
+                # If this pattern is shared by multiple licenses, add unique patterns of other licenses to the exclusion list
+                for other_license in pattern_to_license[pattern]:
+                    if other_license != license_id:
+                        exclusion_patterns.update(license_patterns[other_license])
+        exclusions[license_id] = list(exclusion_patterns)
+
+    # Save patterns and exclusions to JSON files
+    with open(pattern_file, 'w') as f:
         json.dump(license_patterns, f, indent=4)
+    with open(exclusion_file, 'w') as f:
+        json.dump(exclusions, f, indent=4)
 
-    print(f"License patterns saved to {output_file}")
-    return license_patterns
+    print(f"License patterns and exclusions saved to {pattern_file} and {exclusion_file}")
+    return license_patterns, exclusions
 
-def load_license_patterns(pattern_file=PATTERN_FILE):
-    """ Load license patterns from the stored JSON file """
+def load_license_patterns_and_exclusions(pattern_file=PATTERN_FILE, exclusion_file=EXCLUSION_FILE):
+    """ Load license patterns and exclusions from the stored JSON files """
     if not os.path.exists(pattern_file):
         raise FileNotFoundError(f"Pattern file '{pattern_file}' not found.")
     
-    with open(pattern_file, 'r') as f:
-        return json.load(f)
+    if not os.path.exists(exclusion_file):
+        raise FileNotFoundError(f"Exclusion file '{exclusion_file}' not found.")
 
-def match_license_with_patterns(text, license_patterns):
-    """ Match a text using license-specific patterns """
+    with open(pattern_file, 'r') as f:
+        license_patterns = json.load(f)
+    
+    with open(exclusion_file, 'r') as f:
+        exclusions = json.load(f)
+    
+    return license_patterns, exclusions
+
+def match_license_with_patterns_and_exclusions(text, license_patterns, exclusions, spdx_license=None):
+    """ Match a text using license-specific patterns and apply exclusions """
     matches = {}
+    debug = {}
     text = text.lower()  # Make the search case-insensitive
-    for license_id, patterns in license_patterns.items():
+
+    # If a specific SPDX license is provided, only match against that license
+    if spdx_license:
+        patterns = license_patterns.get(spdx_license, [])
+        matched_patterns = []
         match_count = 0
+
         for pattern in patterns:
             if re.search(re.escape(pattern), text, re.IGNORECASE):
                 match_count += 1
-        if match_count > 0:
-            matches[license_id] = match_count
-    return matches
+                matched_patterns.append(pattern)
 
-def match_license(text, spdx_licenses, threshold=0.5):
-    """ Match a text to the closest SPDX license using Sørensen-Dice """
+        if match_count > 0:
+            excluded_patterns = []
+            for exclusion_pattern in exclusions.get(spdx_license, []):
+                if re.search(re.escape(exclusion_pattern), text, re.IGNORECASE):
+                    excluded_patterns.append(exclusion_pattern)
+            return {
+                "SPDX": spdx_license,
+                "method": "string_patterns",
+                "score": match_count,
+                "debug": {
+                    "matched_patterns": matched_patterns,
+                    "excluded_patterns": excluded_patterns
+                }
+            }
+        else:
+            return {
+                "SPDX": spdx_license,
+                "method": "string_patterns",
+                "score": 0,
+                "debug": {
+                    "matched_patterns": [],
+                    "excluded_patterns": []
+                }
+            }
+
+    # Otherwise, match against all licenses
+    for license_id, patterns in license_patterns.items():
+        match_count = 0
+        matched_patterns = []
+        # Apply pattern matching
+        for pattern in patterns:
+            if re.search(re.escape(pattern), text, re.IGNORECASE):
+                match_count += 1
+                matched_patterns.append(pattern)
+        
+        # If matches are found, check exclusions
+        if match_count > 0:
+            excluded = False
+            excluded_patterns = []
+            for exclusion_pattern in exclusions.get(license_id, []):
+                if re.search(re.escape(exclusion_pattern), text, re.IGNORECASE):
+                    excluded = True
+                    excluded_patterns.append(exclusion_pattern)
+            if not excluded:
+                matches[license_id] = match_count
+                debug[license_id] = {
+                    "matched_patterns": matched_patterns,
+                    "excluded_patterns": excluded_patterns
+                }
+
+    return matches, debug
+
+def match_license(text, spdx_licenses, threshold=0.5, spdx_license=None):
+    """ Match a text to the closest SPDX license or a user-specified SPDX license """
     preprocessed_text = preprocess(text)
     best_match = None
     highest_score = 0.0
+
+    if spdx_license:
+        # Load patterns and exclusions, then match against the specified license
+        license_patterns, exclusions = load_license_patterns_and_exclusions()
+        return match_license_with_patterns_and_exclusions(text, license_patterns, exclusions, spdx_license=spdx_license)
 
     for license_data in spdx_licenses:
         license_id = license_data['licenseId']
@@ -127,19 +210,40 @@ def match_license(text, spdx_licenses, threshold=0.5):
             best_match = license_id
 
     if highest_score > threshold:
-        return {"SPDX": best_match, "method": "soredice_proximity_score", "score": highest_score}
+        return {
+            "SPDX": best_match,
+            "method": "soredice_proximity_score",
+            "score": highest_score,
+            "debug": {
+                "matched_patterns": [],
+                "excluded_patterns": []
+            }
+        }
 
-    # If no match above threshold, fall back to pattern-based matching
-    print("No high similarity match found. Falling back to pattern-based search.")
-    license_patterns = load_license_patterns()
-    matches = match_license_with_patterns(text, license_patterns)
+    # If no match above threshold, fall back to pattern-based matching with exclusions
+    print("No high similarity match found. Falling back to pattern-based search with exclusions.")
+    license_patterns, exclusions = load_license_patterns_and_exclusions()
+    matches, debug = match_license_with_patterns_and_exclusions(text, license_patterns, exclusions)
 
     if matches:
         max_matches = max(matches.values())
         top_match = max(matches, key=matches.get)
-        return {"SPDX": top_match, "method": "string_patterns", "score": max_matches}
+        return {
+            "SPDX": top_match,
+            "method": "string_patterns",
+            "score": max_matches,
+            "debug": debug[top_match]
+        }
     else:
-        return {"SPDX": "UNKNOWN", "method": "string_patterns", "score": 0}
+        return {
+            "SPDX": "UNKNOWN",
+            "method": "string_patterns",
+            "score": 0,
+            "debug": {
+                "matched_patterns": [],
+                "excluded_patterns": []
+            }
+        }
 
 def preprocess(text):
     """ Preprocess the text by normalizing and tokenizing """
@@ -165,16 +269,19 @@ if not os.path.exists('spdx_licenses.json'):
 # Load the local SPDX license data
 spdx_licenses = load_spdx_licenses()
 
-# Generate and store license patterns if the pattern file does not exist
-if not os.path.exists(PATTERN_FILE):
-    generate_license_patterns(spdx_licenses)
+# Generate and store license patterns and exclusions if the files do not exist
+if not os.path.exists(PATTERN_FILE) or not os.path.exists(EXCLUSION_FILE):
+    generate_license_patterns_and_exclusions(spdx_licenses)
 
 # Use the NOTICE-TEST file
-with open('LICENSE-EMPTY', 'r') as f:
+with open('NOTICE-TEST', 'r') as f:
     notice_text = f.read()
 
+# Specify the SPDX ID to match against, e.g., Apache-2.0 (or set to None to match against all)
+user_specified_spdx = None  # Change this value to test against a specific license
+
 # Test matching
-result = match_license(notice_text, spdx_licenses)
+result = match_license(notice_text, spdx_licenses, spdx_license=user_specified_spdx)
 
 # Print the result as a JSON output
 print(json.dumps(result, indent=4))
