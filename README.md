@@ -127,6 +127,12 @@ Follow the examples below to install:
 % BUILD_LIB=1 pip3 install ssdeep
 ```
 
+LibMagic is required for mimetype detection on MacOS. Use Brew to install the library:
+
+```
+% brew install libmagic
+```
+
 ### Amazon Linux 2
 If you are using Amazon Linux 2, you will need to deal with old dependencies, as such you will need to enable the EPEL repository, Development Tools, and a few other libraries:
 
