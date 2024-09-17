@@ -6,7 +6,6 @@ import pickle
 import logging
 from typing import List, Dict
 from pkg_resources import resource_filename
-from oslili import LicenseAndCopyrightIdentifier
 from xmonkey_lidy.matcher import LicenseMatcher
 from urllib.parse import unquote, urlparse, parse_qs
 from urllib.parse import urlparse, parse_qs, unquote
