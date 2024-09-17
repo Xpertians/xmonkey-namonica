@@ -7,6 +7,7 @@ import logging
 from typing import List, Dict
 from pkg_resources import resource_filename
 from oslili import LicenseAndCopyrightIdentifier
+from xmonkey_lidy.matcher import LicenseMatcher
 from urllib.parse import unquote, urlparse, parse_qs
 from urllib.parse import urlparse, parse_qs, unquote
 from .utils import download_file, temp_directory, extract_zip, extract_tar
@@ -70,7 +71,7 @@ class PackageManager:
         temp_dir: str,
         patterns: List[str]
     ) -> List[Dict[str, str]]:
-        identifier = LicenseAndCopyrightIdentifier()
+        lmatcher = LicenseMatcher()
         found_files = []
         for root, dirs, files in os.walk(temp_dir):
             # Exclude .git directories
@@ -84,14 +85,18 @@ class PackageManager:
                     try:
                         file_text = PackageManager.read_file_content(file_path)
                         if file_text:
-                            spdx_code, proba = identifier.identify_license(
-                                file_text
+                            LiDy_results  = lmatcher.identify_license(
+                                file_text, False, True, False
                             )
+                            spdx_code = LiDy_results.get('SPDX', 'Unknown')
+                            method = LiDy_results.get('method', 'Unknown')
+                            score = LiDy_results.get('score', 'Unknown')
                             found_files.append({
                                 "file": file_path,
                                 "content": file_text,
                                 "spdx": spdx_code,
-                                "oslili": proba,
+                                "score": score,
+                                "method": method,
                             })
                     except Exception as e:
                         logging.error(
@@ -126,7 +131,7 @@ class PackageManager:
 
     @staticmethod
     def scan_for_copyright(temp_dir: str) -> List[Dict[str, str]]:
-        identifier = LicenseAndCopyrightIdentifier()
+        lmatcher = LicenseMatcher()
         copyrights = []
         pattern = r"[^0-9<>,.()@a-zA-Z-\s]+"
         for root, dirs, files in os.walk(temp_dir):
@@ -151,14 +156,16 @@ class PackageManager:
                                         clean_line.startswith('copyright') or
                                         " copyright" in clean_line
                                     ):
-                                        copyhits = identifier.copyright_extraction(clean_line)
-                                        if copyhits:
-                                            prediction = copyhits[0]['prediction']
-                                            if 'copyright' in prediction:
-                                                copyrights.append({
-                                                    "file": file_path,
-                                                    "line": clean_line
-                                                })
+                                        copyrs = lmatcher.extract_copyright_info(clean_line, False)
+                                        if copyrs and isinstance(copyrs, list):
+                                            for entry in copyrs:
+                                                if isinstance(entry, dict):
+                                                    year = entry.get('year', 'Unknown')
+                                                    holder = entry.get('holder', 'Unknown')
+                                                    copyrights.append({
+                                                        "file": file_path,
+                                                        "line": clean_line
+                                                    })
                     except UnicodeDecodeError:
                         continue
         return copyrights
