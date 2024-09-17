@@ -5,7 +5,7 @@ with open("README", "r", encoding="utf-8") as fh:
 
 setup(
     name='xmonkey_namonica',
-    version='0.1.29',
+    version='0.1.30',
     description="Purl2Notices - OSS Attribution Generator",
     long_description=long_description,
     long_description_content_type='text/x-rst',
@@ -32,7 +32,7 @@ setup(
         "urllib3",
         "python-magic",
         "beautifulsoup4",
-        "oslili",
         "tqdm",
+        'xmonkey-lidy'
     ],
 )
