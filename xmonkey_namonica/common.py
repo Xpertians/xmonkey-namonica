@@ -86,7 +86,7 @@ class PackageManager:
                         file_text = PackageManager.read_file_content(file_path)
                         if file_text:
                             LiDy_results  = lmatcher.identify_license(
-                                file_text, False, True, False
+                                file_path, False, False, False
                             )
                             spdx_code = LiDy_results.get('SPDX', 'Unknown')
                             method = LiDy_results.get('method', 'Unknown')
