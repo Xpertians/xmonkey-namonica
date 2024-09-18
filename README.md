@@ -3,8 +3,7 @@
 Xmonkey Namonica (xmonkey-namonica) is a Python tool created to facilitate the generation of Open Source Legal Notices, which contain copyright and license information from Open Source packages. The main goal of the tool is to provide a tool for developers to programmatically generate legal notices for the open-source software shipped in their projects, with fewer requirements and no friction.
 
 The tool uses a few other Xmonkey libraries under the hood, for example:
-* OSLiLi: Open Source License Identification Library, a tool that uses fuzzy hashing and ML Naive Bayesian Filter to identify licenses.
-* Python-ssdeep: the main ssdeep library that wraps ssdeep for Fuzzy Hashing.
+* Lidy: LiDY - Simplified License Identification Library.
 
 ## Usage
 
@@ -114,19 +113,9 @@ xmonkey-namonica "pkg:conda/absl-py@1.3.0?build=pyhd8ed1ab_0&channel=main&subdir
 ## Install
 Before installing xmonkey-namonica, you must install some system dependencies required by the tool.
 
-xmonkey-namonica requires Python3.8+ and [ssdeep](https://ssdeep-project.github.io/ssdeep/index.html) for Fuzzy Hashing calculations.
+xmonkey-namonica requires Python3.8+
 
 ### Mac
-When you attempt to install ssdeep on Mac, you must first verify glibtoolize is available.
-
-Follow the examples below to install:
-
-```
-% brew install libtool automake
-% ln -s /opt/homebrew/bin/glibtoolize /opt/homebrew/bin/libtoolize
-% BUILD_LIB=1 pip3 install ssdeep
-```
-
 LibMagic is required for mimetype detection on MacOS. Use Brew to install the library:
 
 ```
@@ -140,7 +129,7 @@ If you are using Amazon Linux 2, you will need to deal with old dependencies, as
 $ sudo amazon-linux-extras install epel -y
 $ sudo yum update -y
 $ sudo yum group install "Development Tools" -y
-$ sudo yum install python3-devel sdeep ssdeep-devel -y
+$ sudo yum install python3-devel -y
 $ pip3 install --upgrade wheel
 $ pip3 install --upgrade cffi
 $ pip3 install xmonkey-namonica
@@ -177,8 +166,3 @@ $ python3 -m pip install "urllib3<2.0"
 ```
 
 If you still have trouble, please install Python 3.9+ from source. Here is an interesting guide that can help: https://techviewleo.com/how-to-install-python-on-amazon-linux-2/
-
-
-### ssdeep and fatal error: fuzzy.h
-
-If you can't install SSDEEP due an error related to missing fuzzy.h, please follow the recommendations described [here](https://github.com/Xpertians/xmonkey-namonica/issues/39)

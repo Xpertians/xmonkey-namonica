@@ -14,6 +14,4 @@ and no friction.
 The tool uses a few other Xmonkey libraries under the hood, 
 for example:
 
-* OSLiLi: Open Source License Identification Library, a tool that uses fuzzy hashing and ML Naive Bayesian Filter to identify licenses.
-
-* Python-ssdeep: the main ssdeep library that wraps ssdeep for Fuzzy Hashing.
+* Lidy: LiDY - Simplified License Identification Library.
