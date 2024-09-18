@@ -5,7 +5,7 @@ with open("README", "r", encoding="utf-8") as fh:
 
 setup(
     name='xmonkey_namonica',
-    version='0.1.34',
+    version='0.1.35',
     description="Purl2Notices - OSS Attribution Generator",
     long_description=long_description,
     long_description_content_type='text/x-rst',
