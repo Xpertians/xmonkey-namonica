@@ -84,9 +84,13 @@ def main():
         elif args.ospi:
             for result in results:
                 purl = result['purl']
-                license = result['license'] or '-'
-                down_url = result['url']
-                str_line = f'"{purl}","{license}","{down_url}"'
+                license = result['license'] or 'NOASSERTION'
+                copyrights = list(
+                    set([entry['line'] for entry in result['copyrights']])
+                )
+                copyrights = ",".join(copyrights) or 'NOASSERTION'
+                down_url = result['url'] or 'NOASSERTION'
+                str_line = f'"{purl}","{license}","{copyrights}","{down_url}"'
                 print(str_line)
         else:
             for result in results:
@@ -112,9 +116,13 @@ def main():
                 elif args.ospi:
                     for result in results:
                         purl = result['purl']
-                        license = result['license'] or '-'
-                        down_url = result['url']
-                        str_line = f'"{purl}","{license}","{down_url}"'
+                        license = result['license'] or 'NOASSERTION'
+                        copyrights = list(
+                            set([entry['line'] for entry in result['copyrights']])
+                        )
+                        copyrights = ",".join(copyrights) or 'NOASSERTION'
+                        down_url = result['url'] or 'NOASSERTION'
+                        str_line = f'"{purl}","{license}","{copyrights}","{down_url}"'
                         f.write(str_line + "\n")
                 else:
                     for result in results:
