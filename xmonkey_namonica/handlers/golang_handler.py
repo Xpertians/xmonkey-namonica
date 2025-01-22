@@ -114,6 +114,8 @@ class GolangHandler(BaseHandler):
         # Check if pkg exist
         versions_url = f"{base_url}/{go_pkg}/@v/list"
         response = requests.get(versions_url, headers=headers)
+        if "github.com" in go_pkg:
+            response.status_code = 888
         if response.status_code == 403:
             print(versions_url)
             exit()
