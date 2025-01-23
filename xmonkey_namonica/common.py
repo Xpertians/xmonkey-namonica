@@ -25,31 +25,54 @@ class PackageManager:
             raise ValueError(
                 "Invalid PURL format. Expected at least pkg:type/name@version"
             )
+        result['fullparts'] = path_parts
+
+        # Purl Type
         result['type'] = path_parts[0]
+        # Pase PURL tail for name and version
         name_with_version = path_parts[-1]
-        if len(path_parts) >= 3:
-            result['namespace'] = unquote(path_parts[1])
-        else:
-            result['namespace'] = None
         name_version = name_with_version.split('@', 1)
-        result['name'] = unquote(name_version[0])
         if len(name_version) > 1:
             result['version'] = name_version[1]
         else:
             result['version'] = None
-        # Small ugly hack for Go
+
+        result['name'] = unquote(name_version[0])
+
+        if len(path_parts) >= 3:
+            result['namespace'] = unquote(path_parts[1])
+        else:
+            result['namespace'] = None
+
+        # GoLang Specific for Handling NameSpace of Internal
         if 'golang' in result['type']:
-            if len(path_parts) == 5:
-                result['name'] = path_parts[3]
-                result['version'] = None
+            if "github" in path_parts[1]:
+                result['repository'] = 'github.com'
+                result['namespace'] = path_parts[2]
+            else:
+                result['repository'] = path_parts[1]
+                result['namespace'] = path_parts[1]
             if len(path_parts) <= 2:
                 print('purl:', purl)
                 raise ValueError(
                     "Invalid PURL format."
                 )
+        else:
+            result['repository'] = result['namespace']
+
+        # Qualifiers
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
-        result['fullparts'] = path_parts
+
+        debug = 1
+        if debug == 1:
+            print("purl:", purl)
+            print("type:", result['type'])
+            print("repository:", result['repository'])
+            print("namespace:", result['namespace'])
+            print("name:", result['name'])
+            print("version:", result['version'])
+
         return result
 
     @staticmethod

@@ -71,28 +71,6 @@ class GolangHandler(BaseHandler):
             exit()
 
     def construct_repo_url(self):
-        GOLANG_REPOS = {
-            "cloud.google.com/go": "googleapis/google-cloud-go",
-            "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
-            "google.golang.org/grpc": "grpc/grpc-go",
-            "golang.org/x/tools": "golang/tools",
-            "golang.org/x/net": "golang/net",
-            "golang.org/x/sys": "golang/sys",
-            "golang.org/x/text": "golang/text",
-            "golang.org/x/crypto": "golang/crypto",
-            "k8s.io/kubernetes": "kubernetes/kubernetes",
-            "k8s.io/client-go": "kubernetes/client-go",
-            "go.opentelemetry.io/contrib": "open-telemetry/opentelemetry-go",
-            "github.com": (
-                self.base_url + self.purl_details['fullparts'][2] + "/"
-            )
-        }
-        base_url = "https://goproxy.io"
-        go_pkg = "/".join(self.purl_details['fullparts']).replace(
-            'golang/', ''
-        )
-        if "@" in go_pkg:
-            go_pkg, version = go_pkg.split("@")
         headers = {
             'User-Agent': (
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) '
@@ -111,47 +89,83 @@ class GolangHandler(BaseHandler):
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
         }
-        # Check if pkg exist
-        versions_url = f"{base_url}/{go_pkg}/@v/list"
-        response = requests.get(versions_url, headers=headers)
-        if "github.com" in go_pkg:
-            response.status_code = 888
-        if response.status_code == 403:
-            print(versions_url)
-            exit()
-        elif response.status_code == 200:
-            versions = response.text.split()
-            versions.sort()
-            latest_version = versions[-1]
-            # If exist, and version attempt to download:
-            if version:
-                tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
-                response = requests.get(tarball_url, headers=headers)
-                # If fail, goes to latest
-                if response.status_code != 200:
-                    logging.info(f"Using {version} instead")
-                    version = latest_version
-                    tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
-            else:
-                logging.info(f"No version, using {version} instead")
-                version = latest_version
-                tarball_url = f"{base_url}/{go_pkg}/@v/{version}.zip"
-            full_url = tarball_url
+
+        repository = self.purl_details['repository']
+        namespace = self.purl_details['namespace']
+        go_pkg = self.purl_details['name']
+        go_version = self.purl_details['version']
+
+        if "google.golang" in repository:
+            ggg_url = self.get_source_from_godev(namespace, go_pkg, go_version)
         else:
-            logging.info(f"No version available for {go_pkg}")
-            namespace = self.purl_details['namespace']
-            pkg_full = self.purl_details['fullparts'][2]
-            namespace = f"{namespace}/{pkg_full}"
-            if namespace in GOLANG_REPOS:
-                base_url = GOLANG_REPOS[namespace]
-                full_url = f"https://github.com/{base_url}"
-            elif "github" in namespace:
-                full_url = f"https://{namespace}/{self.purl_details['name']}"
-            else:
-                full_url = f"https://{namespace}/{self.purl_details['name']}"
-                full_url = self.find_github_links(full_url)
-                full_url = f"{full_url}.git"
-        return f"{full_url}", version
+            ggg_url = ""
+
+        GOLANG_REPOS = {
+            "cloud.google.com/go": "googleapis/google-cloud-go",
+            "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
+            "golang.org/x/tools": "golang/tools",
+            "golang.org/x/net": "golang/net",
+            "golang.org/x/sys": "golang/sys",
+            "golang.org/x/text": "golang/text",
+            "golang.org/x/crypto": "golang/crypto",
+            "k8s.io/kubernetes": "kubernetes/kubernetes",
+            "k8s.io/client-go": "kubernetes/client-go",
+            "go.opentelemetry.io/contrib": "open-telemetry/opentelemetry-go",
+            "google.golang.org": (
+                ggg_url
+            ),
+            "github.com": (
+                namespace + "/" + go_pkg + "/"
+            )
+        }
+        
+        print('repository:', repository)
+        
+        if repository in GOLANG_REPOS:
+            base_url = GOLANG_REPOS[repository]
+            full_url = f"https://github.com/{base_url}"
+        elif "github" in repository:
+            full_url = f"https://{namespace}/{self.purl_details['name']}"
+        else:
+            full_url = f"https://{namespace}/{self.purl_details['name']}"
+            full_url = self.find_github_links(full_url)
+            full_url = f"{full_url}.git"
+
+        print(f"{full_url}", go_version)
+
+        return f"{full_url}", go_version
+
+    def get_source_from_godev(self, namespace, pkg_name, pkg_version):
+        print(namespace, pkg_name, pkg_version)
+        try:
+            # 1. Access the main package page
+            base_url = f"https://pkg.go.dev/{namespace}/{pkg_name}"
+            response = requests.get(base_url)
+            response.raise_for_status()
+            # 2. Parse the HTML content
+            soup = BeautifulSoup(response.content, 'html.parser')
+            # 3. Find the link to the specified version
+            version_link = soup.find('a', href=f"/{namespace}/{pkg_name}@{pkg_version}")
+            if version_link is None:
+                version_link = soup.find('a', href=f"/{namespace}/{pkg_name}")
+            # 4. Construct the URL for the 'Source Files' page
+            source_files_url = f"https://pkg.go.dev{version_link['href']}#section-sourcefiles"
+            # 5. Fetch the 'Source Files' page
+            response = requests.get(source_files_url)
+            response.raise_for_status()
+            source_files_html = response.text
+            soup = BeautifulSoup(source_files_html, 'html.parser')
+            gh_host = 'https://github.com/'
+            github_links = soup.find_all('a', href=lambda href: href.startswith('https://github.com'))
+            for link in github_links:
+                if 'go.mod' in link.get('href'):
+                    gh_lnks = link.get('href').split('/', 1)
+                    github_link = gh_lnks[1]
+                    print("github_link:", github_link)
+            return github_link
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching page: {e}")
+            return None
 
     def unpack(self):
         if self.temp_dir:
@@ -224,12 +238,15 @@ class GolangHandler(BaseHandler):
                 data = response.json()
                 license_name = data.get('license', {}).get('name', '')
                 return license_name
-            elif response.status_code == 404:
-                logging.error("License file not found in repository")
-                return ''
             else:
-                logging.error("Failed: HTTP {response.status_code}")
-                return ''
+                api_url = f"https://api.github.com/repos/{repo_path}/COPYING"
+                response = requests.get(api_url)
+                if response.status_code == 200:
+                    data = response.json()
+                    license_name = data.get('license', {}).get('name', '')
+                    return license_name
+                else:
+                    return ''
 
     def fetch_file(self, url):
         headers = {
