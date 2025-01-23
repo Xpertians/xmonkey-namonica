@@ -118,9 +118,7 @@ class GolangHandler(BaseHandler):
                 namespace + "/" + go_pkg + "/"
             )
         }
-        
-        print('repository:', repository)
-        
+
         if repository in GOLANG_REPOS:
             base_url = GOLANG_REPOS[repository]
             full_url = f"https://github.com/{base_url}"
@@ -131,37 +129,28 @@ class GolangHandler(BaseHandler):
             full_url = self.find_github_links(full_url)
             full_url = f"{full_url}.git"
 
-        print(f"{full_url}", go_version)
-
         return f"{full_url}", go_version
 
     def get_source_from_godev(self, namespace, pkg_name, pkg_version):
-        print(namespace, pkg_name, pkg_version)
         try:
-            # 1. Access the main package page
             base_url = f"https://pkg.go.dev/{namespace}/{pkg_name}"
             response = requests.get(base_url)
             response.raise_for_status()
-            # 2. Parse the HTML content
             soup = BeautifulSoup(response.content, 'html.parser')
-            # 3. Find the link to the specified version
             version_link = soup.find('a', href=f"/{namespace}/{pkg_name}@{pkg_version}")
             if version_link is None:
                 version_link = soup.find('a', href=f"/{namespace}/{pkg_name}")
-            # 4. Construct the URL for the 'Source Files' page
             source_files_url = f"https://pkg.go.dev{version_link['href']}#section-sourcefiles"
-            # 5. Fetch the 'Source Files' page
             response = requests.get(source_files_url)
             response.raise_for_status()
             source_files_html = response.text
             soup = BeautifulSoup(source_files_html, 'html.parser')
             gh_host = 'https://github.com/'
-            github_links = soup.find_all('a', href=lambda href: href.startswith('https://github.com'))
+            github_links = soup.find_all('a', href=lambda href: href.startswith(gh_host))
             for link in github_links:
                 if 'go.mod' in link.get('href'):
-                    gh_lnks = link.get('href').split('/', 1)
-                    github_link = gh_lnks[1]
-                    print("github_link:", github_link)
+                    gh_lnks = link.get('href').split('/')
+                    github_link = gh_lnks[3]+ "/" + gh_lnks[4]
             return github_link
         except requests.exceptions.RequestException as e:
             print(f"Error fetching page: {e}")
