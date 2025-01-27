@@ -21,6 +21,7 @@ class GolangHandler(BaseHandler):
     def fetch(self):
         download_url, license_txt = self.get_package_info()
         self.repo_url = download_url
+        self.download_url = download_url
         if license_txt:
             lmatcher = LicenseMatcher()
             LiDy_results  = lmatcher.identify_license(
@@ -136,7 +137,7 @@ class GolangHandler(BaseHandler):
         results['copyrights'] = copyhits
         self.results = results
         results['license'] = self.spdx_code
-        results['url'] = self.repo_url[0]
+        results['url'] = self.repo_url
         self.results = results
 
     def get_license(self):
