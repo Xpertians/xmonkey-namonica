@@ -47,6 +47,9 @@ class PackageManager:
         # GoLang Specific for Handling NameSpace of Internal
         if 'golang' in result['type']:
             if "github" in path_parts[1]:
+                if len(path_parts) >= 5:
+                    result['name'] = path_parts[3]
+                    result['version'] = ''
                 result['repository'] = 'github.com'
                 result['namespace'] = path_parts[2]
             else:
