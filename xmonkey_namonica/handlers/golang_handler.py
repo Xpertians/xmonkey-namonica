@@ -55,19 +55,25 @@ class GolangHandler(BaseHandler):
             github_links = [
                 link['href'] for link in links if 'github.com' in link['href']
             ]
+            pkggodev_links = [
+                link['href'] for link in links if 'pkg.go.dev' in link['href']
+            ]
             if github_links:
-                gh_link = github_links[0]
-                parts = gh_link.split('/')
-                if 'tree' in parts:
-                    index = parts.index('tree')
-                    parts = parts[:index]
-                    return '/'.join(parts)
-                else:
-                    return gh_link
+                for gh_link in github_links:
+                    if 'go.mod' in gh_link:
+                        parts = gh_link.split('/')
+                        if 'tree' in parts:
+                            index = parts.index('tree')
+                            parts = parts[:index]
+                            return '/'.join(parts)
+                        else:
+                            return gh_link
+            elif pkggodev_links:
+                pkggo_link = pkggodev_links[0]
+                return self.find_github_links(pkggo_link)
             else:
                 return ''
         except requests.RequestException as e:
-            print(url)
             logging.error(f"An error occurred while accessing the URL: {e}")
             exit()
 
@@ -134,10 +140,8 @@ class GolangHandler(BaseHandler):
             full_url = f"https://{namespace}/{self.purl_details['name']}"
         else:
             full_url = f"https://{namespace}/{self.purl_details['name']}"
-            print('looking for:', full_url)
             full_url = self.find_github_links(full_url)
             full_url = f"{full_url}.git"
-
         return f"{full_url}", go_version
 
     def get_source_from_godev(self, namespace, pkg_name, pkg_version):
