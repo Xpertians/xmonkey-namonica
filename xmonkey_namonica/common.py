@@ -76,7 +76,7 @@ class PackageManager:
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
 
-        debug = 1
+        debug = 0
         if debug == 1:
             print("purl:", purl)
             print("type:", result['type'])

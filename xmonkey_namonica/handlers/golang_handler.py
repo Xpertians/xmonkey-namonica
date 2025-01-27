@@ -9,6 +9,7 @@ import requests
 import subprocess
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
+from xmonkey_lidy.matcher import LicenseMatcher
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
 from ..common import PackageManager, temp_directory
@@ -18,20 +19,25 @@ from ..utils import extract_zip, extract_tar, extract_bz2
 
 class GolangHandler(BaseHandler):
     def fetch(self):
-        download_url = self.get_package_info()
+        download_url, license_txt = self.get_package_info()
         self.repo_url = download_url
+        if license_txt:
+            lmatcher = LicenseMatcher()
+            LiDy_results  = lmatcher.identify_license(
+                license_txt, False, False, False
+            )
+            self.spdx_code = LiDy_results.get('SPDX', 'Unknown')
+        else:
+            self.spdx_code = ''
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
             filename = (
                 f"{self.purl_details['version']}.zip"
             )
-            print('filename:', filename)
             package_file_path = os.path.join(
                 temp_dir,
                 filename
             )
-            print('download_url:', download_url)
-            print('package_file_path:', package_file_path)
             rst = download_file(download_url, package_file_path)
             if rst:
                 logging.info(f"Downloaded package in {self.temp_dir}")
@@ -39,24 +45,6 @@ class GolangHandler(BaseHandler):
                 self.scan()
             else:
                 self.placehldr()
-        print('done!')
-        exit()
-        repo_url = self.construct_repo_url()
-        self.repo_url = repo_url
-        with temp_directory() as temp_dir:
-            self.temp_dir = temp_dir
-            if "github" in self.repo_url[0]:
-                print('repo:', self.repo_url[0])
-                self.clone_repo(repo_url)
-                logging.info(f"Repo cloned to {self.temp_dir}")
-                self.scan()
-            elif ".git" in self.repo_url[0]:
-                self.clone_repo(repo_url)
-                logging.info(f"Repo cloned to {self.temp_dir}")
-                self.scan()
-            else:
-                logging.info(f"URL {repo_url[0]} not supported")
-                exit()
 
     def get_package_info(self):
         go_proxy = "https://proxy.golang.org"
@@ -67,18 +55,38 @@ class GolangHandler(BaseHandler):
         if len(parts) != 2:
             raise ValueError("Invalid PURL format. Expected '<module-path>@<version>'.")
         module_path = parts[0]
+        origin_url = f"https://{module_path}"
+        license_txt = ''
+        if "github.com" in origin_url:
+            raw_base_url = origin_url.replace("github.com", "raw.githubusercontent.com")
+            branches = ["refs/heads/main", "refs/heads/master"]
+            license_paths = ["LICENSE", "LICENSE.txt", "LICENSE.md", "COPYING"]
+
+            for branch in branches:
+                for path in license_paths:
+                    license_url = f"{raw_base_url}/{branch}/{path}"
+                    try:
+                        response = requests.get(license_url)
+                        if response.status_code == 200:
+                            if "Redirecting" in response.text:
+                                license_txt = ''
+                            else:
+                                license_txt = response.text
+                    except requests.exceptions.RequestException:
+                        continue
+
         module_path = requests.utils.unquote(module_path)
         version = parts[1]
         encoded_module_path = requests.utils.quote(module_path, safe="")
-        url = f"{go_proxy}/{encoded_module_path}/@v/{version}.info"
+        info_url = f"{go_proxy}/{encoded_module_path}/@v/{version}.info"
         try:
-            response = requests.get(url)
+            response = requests.get(info_url)
             response.raise_for_status()
             package_info = response.json()
-            return f"{go_proxy}/{encoded_module_path}/@v/{version}.zip"
+            return f"{go_proxy}/{encoded_module_path}/@v/{version}.zip", license_txt
         except requests.exceptions.RequestException as e:
             print(f"Error fetching package info: {e}")
-            return None
+            return None, None
 
     def placehldr(self):
         results = {}
@@ -89,142 +97,14 @@ class GolangHandler(BaseHandler):
         results['url'] = self.repo_url
         self.results = results
 
-    def find_github_links(self, url):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            links = soup.find_all('a', href=True)
-            github_links = [
-                link['href'] for link in links if 'github.com' in link['href']
-            ]
-            pkggodev_links = [
-                link['href'] for link in links if 'pkg.go.dev' in link['href']
-            ]
-            if github_links:
-                for gh_link in github_links:
-                    if 'go.mod' in gh_link:
-                        parts = gh_link.split('/')
-                        if 'tree' in parts:
-                            index = parts.index('tree')
-                            parts = parts[:index]
-                            return '/'.join(parts)
-                        else:
-                            return gh_link
-            elif pkggodev_links:
-                pkggo_link = pkggodev_links[0]
-                return self.find_github_links(pkggo_link)
-            else:
-                return ''
-        except requests.RequestException as e:
-            logging.error(f"An error occurred while accessing the URL: {e}")
-            exit()
-
-    def construct_repo_url(self):
-        headers = {
-            'User-Agent': (
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) '
-                'Gecko/20100101 Firefox/106.0'
-            ),
-            'Accept': (
-                'text/html,application/xhtml+xml,application/xml;q=0.9,'
-                'image/avif,image/webp,*/*;q=0.8'
-            ),
-            'Accept-Language': 'en-US,en;q=0.5',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-        }
-
-        repository = self.purl_details['repository']
-        namespace = self.purl_details['namespace']
-        go_pkg = self.purl_details['name']
-        go_version = self.purl_details['version']
-
-        ggl_lnk = ''
-        gl_x = ''
-
-        if "golang.org" in repository and 'x' in namespace:
-            gl_x = "https://go.googlesource.com/" + go_pkg
-        elif "google.golang.org" in repository:
-            ggl_lnk = self.get_source_from_godev(namespace, go_pkg, go_version)
-        elif "golang.org" in repository:
-            gl_x = self.get_source_from_godev(repository, namespace, '')
-        else:
-            gl_x = ''
-
-        if "go.opentelemetry.io" in repository:
-            got_lnk = self.get_source_from_godev(repository, namespace, '')
-        else:
-            got_lnk = ''
-
-        GOLANG_REPOS = {
-            "cloud.google.com/go": "googleapis/google-cloud-go",
-            "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
-            "k8s.io/kubernetes": "kubernetes/kubernetes",
-            "k8s.io/client-go": "kubernetes/client-go",
-            "golang.org": gl_x,
-            "github.com": (
-                "https://github.com/" + namespace + "/" + go_pkg + "/"
-            )
-        }
-
-        if repository in GOLANG_REPOS:
-            full_url = GOLANG_REPOS[repository]
-            if "github" not in full_url:
-                full_url = f"{full_url}.git"
-        elif "golang.org" in repository and not "google" in repository:
-            full_url = f"https://{namespace}/{self.purl_details['name']}"
-            full_url = f"{full_url}.git"
-        elif "go.opentelemetry.io" in repository:
-            got_lnk = self.get_source_from_godev(repository, namespace, '')
-            full_url = f"https://github.com/{got_lnk}"
-            full_url = f"{full_url}.git"
-        elif "github" in repository:
-            full_url = f"https://{namespace}/{self.purl_details['name']}"
-        else:
-            full_url = f"https://{namespace}/{self.purl_details['name']}"
-            full_url = self.find_github_links(full_url)
-            full_url = f"{full_url}.git"
-        print(f"{full_url}", go_version)
-        return f"{full_url}", go_version
-
-    def get_source_from_godev(self, namespace, pkg_name, pkg_version):
-        print('url:', namespace, pkg_name, pkg_version)
-        try:
-            base_url = f"https://pkg.go.dev/{namespace}/{pkg_name}"
-            response = requests.get(base_url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
-            version_link = soup.find('a', href=f"/{namespace}/{pkg_name}@{pkg_version}")
-            if version_link is None:
-                version_link = soup.find('a', href=f"/{namespace}/{pkg_name}")
-            source_files_url = f"https://pkg.go.dev{version_link['href']}#section-sourcefiles"
-            response = requests.get(source_files_url)
-            response.raise_for_status()
-            source_files_html = response.text
-            soup = BeautifulSoup(source_files_html, 'html.parser')
-            gh_host = 'https://github.com/'
-            github_links = soup.find_all('a', href=lambda href: href.startswith(gh_host))
-            github_link = ''
-            for link in github_links:
-                if 'go.mod' in link.get('href'):
-                    gh_lnks = link.get('href').split('/')
-                    github_link = gh_lnks[3]+ "/" + gh_lnks[4]
-            return github_link
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching page: {e}")
-            return None
-
     def unpack(self):
         if self.temp_dir:
+            filename = (
+                f"{self.purl_details['version']}.zip"
+            )
             package_file_path = os.path.join(
                 self.temp_dir,
-                "downloaded_file"
+                filename
             )
             mime = magic.Magic(mime=True)
             mimetype = mime.from_file(package_file_path)
@@ -255,9 +135,12 @@ class GolangHandler(BaseHandler):
         copyhits = PackageManager.scan_for_copyright(self.temp_dir)
         results['copyrights'] = copyhits
         self.results = results
-        results['license'] = self.get_license(self.repo_url)
+        results['license'] = self.spdx_code
         results['url'] = self.repo_url[0]
         self.results = results
+
+    def get_license(self):
+        return self.spdx_code
 
     def generate_report(self):
         if not self.results['license']:
@@ -270,100 +153,3 @@ class GolangHandler(BaseHandler):
             self.results['license'] = ', '.join(fnd_licenses)
         logging.info("Generating report based on the scanned data...")
         return self.results
-
-    def get_license(self, repo_url):
-        repo_url = repo_url[0]
-        if "proxy" in repo_url:
-            info_url = repo_url.replace('.zip', '.info')
-            license_files = self.results['license_files']
-            if len(license_files) == 1:
-                license_file = license_files[0]
-                return license_file['spdx']
-            else:
-                return ''
-        elif "github.com" in repo_url:
-            if repo_url.endswith('.git'):
-                repo_url = repo_url[:-4]
-            repo_path = repo_url.split("github.com/")[1]
-            api_url = f"https://api.github.com/repos/{repo_path}/license"
-            response = requests.get(api_url)
-            if response.status_code == 200:
-                data = response.json()
-                license_name = data.get('license', {}).get('name', '')
-                return license_name
-            else:
-                api_url = f"https://api.github.com/repos/{repo_path}/COPYING"
-                response = requests.get(api_url)
-                if response.status_code == 200:
-                    data = response.json()
-                    license_name = data.get('license', {}).get('name', '')
-                    return license_name
-                else:
-                    return ''
-        else:
-            return ''
-
-    def fetch_file(self, url):
-        headers = {
-            'User-Agent': (
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) '
-                'Gecko/20100101 Firefox/106.0'
-            ),
-            'Accept': (
-                'text/html,application/xhtml+xml,application/xml;q=0.9,'
-                'image/avif,image/webp,*/*;q=0.8'
-            ),
-            'Accept-Language': 'en-US,en;q=0.5',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            file_data = response.content
-            package_file_path = os.path.join(
-                self.temp_dir,
-                "downloaded_file"
-            )
-            with open(package_file_path, "wb") as file:
-                file.write(file_data)
-            logging.info("File downloaded successfully.")
-        return response.status_code
-
-    def clone_repo(self, repo_url):
-        repo = repo_url[0]
-        try:
-            subprocess.run(
-                ["git", "clone", repo, self.temp_dir],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            if 'latest' in self.purl_details['version']:
-                self.purl_details['version'] = None
-            if self.purl_details['version']:
-                version = self.purl_details['version']
-                try:
-                    subprocess.run(
-                        ["git", "-C", self.temp_dir, "checkout", version],
-                        check=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                except subprocess.CalledProcessError:
-                    logging.warning(
-                        f"Failed to checkout version {version}, "
-                        f"defaulting to master/main"
-                    )
-                    print(
-                        f"Failed to checkout version {version}, "
-                        f"defaulting to master/main"
-                    )
-            logging.info(f"Repository cloned successfully to {self.temp_dir}")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to clone repository: {e}")
-            raise
