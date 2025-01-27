@@ -55,6 +55,9 @@ class PackageManager:
             elif "go.opentelemetry.io" in path_parts[1]:
                 result['repository'] = 'go.opentelemetry.io'
                 result['namespace'] = path_parts[2]
+            elif "google.golang.org" in path_parts[1]:
+                result['repository'] = 'google.golang.org'
+                result['namespace'] = path_parts[1]
             elif "golang.org" in path_parts[1]:
                 result['repository'] = 'golang.org'
                 result['namespace'] = path_parts[2]

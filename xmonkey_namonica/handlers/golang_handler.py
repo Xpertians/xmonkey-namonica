@@ -20,16 +20,12 @@ class GolangHandler(BaseHandler):
         self.repo_url = repo_url
         with temp_directory() as temp_dir:
             self.temp_dir = temp_dir
-            if "goproxy" in self.repo_url[0]:
-                response = self.fetch_file(repo_url[0])
-                if response == 200:
-                    logging.info(f"File downloaded in {self.temp_dir}")
-                    self.unpack()
-                    self.scan()
-                else:
-                    logging.info(f"URL {repo_url[0]} not supported")
-                    exit()
-            elif "github" in self.repo_url[0]:
+            if "github" in self.repo_url[0]:
+                print('repo:', self.repo_url[0])
+                self.clone_repo(repo_url)
+                logging.info(f"Repo cloned to {self.temp_dir}")
+                self.scan()
+            elif ".git" in self.repo_url[0]:
                 self.clone_repo(repo_url)
                 logging.info(f"Repo cloned to {self.temp_dir}")
                 self.scan()
@@ -102,49 +98,52 @@ class GolangHandler(BaseHandler):
         go_pkg = self.purl_details['name']
         go_version = self.purl_details['version']
 
+        ggl_lnk = ''
+        gl_x = ''
+
         if "golang.org" in repository and 'x' in namespace:
-            gl_x = repository + "/" + namespace + "/" + go_pkg
+            gl_x = "https://go.googlesource.com/" + go_pkg
+        elif "google.golang.org" in repository:
+            ggl_lnk = self.get_source_from_godev(namespace, go_pkg, go_version)
         elif "golang.org" in repository:
             gl_x = self.get_source_from_godev(repository, namespace, '')
         else:
             gl_x = ''
-        if gl_x:
-            print("gl_x:", gl_x)
+
         if "go.opentelemetry.io" in repository:
             got_lnk = self.get_source_from_godev(repository, namespace, '')
         else:
             got_lnk = ''
-        if "google.golang.org" in repository:
-            ggl_lnk = self.get_source_from_godev(namespace, go_pkg, go_version)
-        else:
-            ggl_lnk = ''
 
         GOLANG_REPOS = {
             "cloud.google.com/go": "googleapis/google-cloud-go",
             "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
             "k8s.io/kubernetes": "kubernetes/kubernetes",
             "k8s.io/client-go": "kubernetes/client-go",
-            "golang.org/x/tools": "golang/tools",
-            "golang.org/x/net": "golang/net",
-            "golang.org/x/sys": "golang/sys",
-            "golang.org/x/text": "golang/text",
             "golang.org": gl_x,
-            "go.opentelemetry.io": got_lnk,
-            "google.golang.org": ggl_lnk,
             "github.com": (
-                namespace + "/" + go_pkg + "/"
+                "https://github.com/" + namespace + "/" + go_pkg + "/"
             )
         }
 
         if repository in GOLANG_REPOS:
-            base_url = GOLANG_REPOS[repository]
-            full_url = f"https://github.com/{base_url}"
+            full_url = GOLANG_REPOS[repository]
+            if "github" not in full_url:
+                full_url = f"{full_url}.git"
+        elif "golang.org" in repository and not "google" in repository:
+            full_url = f"https://{namespace}/{self.purl_details['name']}"
+            full_url = f"{full_url}.git"
+        elif "go.opentelemetry.io" in repository:
+            got_lnk = self.get_source_from_godev(repository, namespace, '')
+            full_url = f"https://github.com/{got_lnk}"
+            full_url = f"{full_url}.git"
         elif "github" in repository:
             full_url = f"https://{namespace}/{self.purl_details['name']}"
         else:
             full_url = f"https://{namespace}/{self.purl_details['name']}"
             full_url = self.find_github_links(full_url)
             full_url = f"{full_url}.git"
+        print(f"{full_url}", go_version)
         return f"{full_url}", go_version
 
     def get_source_from_godev(self, namespace, pkg_name, pkg_version):
@@ -170,7 +169,6 @@ class GolangHandler(BaseHandler):
                     github_link = gh_lnks[3]+ "/" + gh_lnks[4]
             return github_link
         except requests.exceptions.RequestException as e:
-            print(namespace, pkg_name, pkg_version)
             print(f"Error fetching page: {e}")
             return None
 
@@ -235,7 +233,7 @@ class GolangHandler(BaseHandler):
                 return license_file['spdx']
             else:
                 return ''
-        else:
+        elif "github.com" in repo_url:
             if repo_url.endswith('.git'):
                 repo_url = repo_url[:-4]
             repo_path = repo_url.split("github.com/")[1]
@@ -254,6 +252,8 @@ class GolangHandler(BaseHandler):
                     return license_name
                 else:
                     return ''
+        else:
+            return ''
 
     def fetch_file(self, url):
         headers = {
@@ -308,6 +308,10 @@ class GolangHandler(BaseHandler):
                     )
                 except subprocess.CalledProcessError:
                     logging.warning(
+                        f"Failed to checkout version {version}, "
+                        f"defaulting to master/main"
+                    )
+                    print(
                         f"Failed to checkout version {version}, "
                         f"defaulting to master/main"
                     )
