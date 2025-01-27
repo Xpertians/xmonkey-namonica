@@ -102,32 +102,35 @@ class GolangHandler(BaseHandler):
         go_pkg = self.purl_details['name']
         go_version = self.purl_details['version']
 
-        if "google.golang" in repository:
-            ggg_url = self.get_source_from_godev(namespace, go_pkg, go_version)
+        if "golang.org" in repository and 'x' in namespace:
+            gl_x = repository + "/" + namespace + "/" + go_pkg
+        elif "golang.org" in repository:
+            gl_x = self.get_source_from_godev(repository, namespace, '')
         else:
-            ggg_url = ""
-
+            gl_x = ''
+        if gl_x:
+            print("gl_x:", gl_x)
         if "go.opentelemetry.io" in repository:
-            got_url = self.get_source_from_godev(repository, namespace, '')
+            got_lnk = self.get_source_from_godev(repository, namespace, '')
         else:
-            got_url = ""
+            got_lnk = ''
+        if "google.golang.org" in repository:
+            ggl_lnk = self.get_source_from_godev(namespace, go_pkg, go_version)
+        else:
+            ggl_lnk = ''
 
         GOLANG_REPOS = {
             "cloud.google.com/go": "googleapis/google-cloud-go",
             "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
+            "k8s.io/kubernetes": "kubernetes/kubernetes",
+            "k8s.io/client-go": "kubernetes/client-go",
             "golang.org/x/tools": "golang/tools",
             "golang.org/x/net": "golang/net",
             "golang.org/x/sys": "golang/sys",
             "golang.org/x/text": "golang/text",
-            "golang.org/x/crypto": "golang/crypto",
-            "k8s.io/kubernetes": "kubernetes/kubernetes",
-            "k8s.io/client-go": "kubernetes/client-go",
-            "go.opentelemetry.io": (
-                got_url
-            ),
-            "google.golang.org": (
-                ggg_url
-            ),
+            "golang.org": gl_x,
+            "go.opentelemetry.io": got_lnk,
+            "google.golang.org": ggl_lnk,
             "github.com": (
                 namespace + "/" + go_pkg + "/"
             )
@@ -160,12 +163,14 @@ class GolangHandler(BaseHandler):
             soup = BeautifulSoup(source_files_html, 'html.parser')
             gh_host = 'https://github.com/'
             github_links = soup.find_all('a', href=lambda href: href.startswith(gh_host))
+            github_link = ''
             for link in github_links:
                 if 'go.mod' in link.get('href'):
                     gh_lnks = link.get('href').split('/')
                     github_link = gh_lnks[3]+ "/" + gh_lnks[4]
             return github_link
         except requests.exceptions.RequestException as e:
+            print(namespace, pkg_name, pkg_version)
             print(f"Error fetching page: {e}")
             return None
 

@@ -55,6 +55,9 @@ class PackageManager:
             elif "go.opentelemetry.io" in path_parts[1]:
                 result['repository'] = 'go.opentelemetry.io'
                 result['namespace'] = path_parts[2]
+            elif "golang.org" in path_parts[1]:
+                result['repository'] = 'golang.org'
+                result['namespace'] = path_parts[2]
             else:
                 result['repository'] = path_parts[1]
                 result['namespace'] = path_parts[1]
@@ -70,7 +73,7 @@ class PackageManager:
         result['qualifiers'] = parse_qs(url.query)
         result['subpath'] = unquote(url.fragment) if url.fragment else None
 
-        debug = 0
+        debug = 1
         if debug == 1:
             print("purl:", purl)
             print("type:", result['type'])
