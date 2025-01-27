@@ -67,6 +67,7 @@ class GolangHandler(BaseHandler):
             else:
                 return ''
         except requests.RequestException as e:
+            print(url)
             logging.error(f"An error occurred while accessing the URL: {e}")
             exit()
 
@@ -100,6 +101,11 @@ class GolangHandler(BaseHandler):
         else:
             ggg_url = ""
 
+        if "go.opentelemetry.io" in repository:
+            got_url = self.get_source_from_godev(repository, namespace, '')
+        else:
+            got_url = ""
+
         GOLANG_REPOS = {
             "cloud.google.com/go": "googleapis/google-cloud-go",
             "go.mongodb.org/mongo-driver": "mongodb/mongo-go-driver",
@@ -110,7 +116,9 @@ class GolangHandler(BaseHandler):
             "golang.org/x/crypto": "golang/crypto",
             "k8s.io/kubernetes": "kubernetes/kubernetes",
             "k8s.io/client-go": "kubernetes/client-go",
-            "go.opentelemetry.io/contrib": "open-telemetry/opentelemetry-go",
+            "go.opentelemetry.io": (
+                got_url
+            ),
             "google.golang.org": (
                 ggg_url
             ),
@@ -126,6 +134,7 @@ class GolangHandler(BaseHandler):
             full_url = f"https://{namespace}/{self.purl_details['name']}"
         else:
             full_url = f"https://{namespace}/{self.purl_details['name']}"
+            print('looking for:', full_url)
             full_url = self.find_github_links(full_url)
             full_url = f"{full_url}.git"
 
