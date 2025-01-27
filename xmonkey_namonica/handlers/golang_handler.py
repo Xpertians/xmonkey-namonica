@@ -1,10 +1,13 @@
 import os
+import json
 import magic
 import shutil
 import hashlib
 import logging
+import argparse
 import requests
 import subprocess
+from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 from .base_handler import BaseHandler
 from urllib.parse import urlparse, parse_qs
@@ -15,7 +18,29 @@ from ..utils import extract_zip, extract_tar, extract_bz2
 
 class GolangHandler(BaseHandler):
     def fetch(self):
-        self.base_url = "https://github.com/"
+        download_url = self.get_package_info()
+        self.repo_url = download_url
+        with temp_directory() as temp_dir:
+            self.temp_dir = temp_dir
+            filename = (
+                f"{self.purl_details['version']}.zip"
+            )
+            print('filename:', filename)
+            package_file_path = os.path.join(
+                temp_dir,
+                filename
+            )
+            print('download_url:', download_url)
+            print('package_file_path:', package_file_path)
+            rst = download_file(download_url, package_file_path)
+            if rst:
+                logging.info(f"Downloaded package in {self.temp_dir}")
+                self.unpack()
+                self.scan()
+            else:
+                self.placehldr()
+        print('done!')
+        exit()
         repo_url = self.construct_repo_url()
         self.repo_url = repo_url
         with temp_directory() as temp_dir:
@@ -32,6 +57,28 @@ class GolangHandler(BaseHandler):
             else:
                 logging.info(f"URL {repo_url[0]} not supported")
                 exit()
+
+    def get_package_info(self):
+        go_proxy = "https://proxy.golang.org"
+        module_path = "/".join(self.purl_details['fullparts'])
+        purl_body = module_path[len("golang/"):]
+        parsed_url = urlparse(purl_body)
+        parts = purl_body.split("@")
+        if len(parts) != 2:
+            raise ValueError("Invalid PURL format. Expected '<module-path>@<version>'.")
+        module_path = parts[0]
+        module_path = requests.utils.unquote(module_path)
+        version = parts[1]
+        encoded_module_path = requests.utils.quote(module_path, safe="")
+        url = f"{go_proxy}/{encoded_module_path}/@v/{version}.info"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            package_info = response.json()
+            return f"{go_proxy}/{encoded_module_path}/@v/{version}.zip"
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching package info: {e}")
+            return None
 
     def placehldr(self):
         results = {}
@@ -147,6 +194,7 @@ class GolangHandler(BaseHandler):
         return f"{full_url}", go_version
 
     def get_source_from_godev(self, namespace, pkg_name, pkg_version):
+        print('url:', namespace, pkg_name, pkg_version)
         try:
             base_url = f"https://pkg.go.dev/{namespace}/{pkg_name}"
             response = requests.get(base_url)
