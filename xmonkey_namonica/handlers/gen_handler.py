@@ -128,6 +128,14 @@ class GenericHandler(BaseHandler):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
+            if commit is not None:
+                subprocess.run(
+                    ["git", "checkout", commit],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    cwd=self.temp_dir
+                )
             logging.info(f"Repository cloned successfully to {self.temp_dir}")
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone repository: {e}")
