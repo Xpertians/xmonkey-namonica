@@ -133,6 +133,7 @@ class PackageManager:
                                 "method": method,
                             })
                     except Exception as e:
+                        print(f"Error processing file {file_path}: {e}")
                         logging.error(
                             f"Error processing file {file_path}: {e}"
                         )
@@ -141,12 +142,13 @@ class PackageManager:
     @staticmethod
     def is_readable_text_file(file_path):
         mime = magic.Magic(mime=True)
-        mimetype = mime.from_file(file_path)
-        if mimetype:
-            if mimetype.startswith('text'):
-                return True
-            if mimetype == 'application/octet-stream':
-                return True
+        if os.path.exists(file_path):
+            mimetype = mime.from_file(file_path)
+            if mimetype:
+                if mimetype.startswith('text'):
+                    return True
+                if mimetype == 'application/octet-stream':
+                    return True
         return False
 
     @staticmethod
