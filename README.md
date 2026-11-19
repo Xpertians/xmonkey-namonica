@@ -1,3 +1,8 @@
+# DEPRECATION NOTICE:
+This project has been deprecated in favor of https://github.com/SemClone/ossnotices/
+
+To generate notices from a list of Package URLs (PURLs), as this tool did, use https://github.com/SemClone/purl2notices/, the engine behind ossnotices.
+
 # Xmonkey Namonica
 ## Summary
 Xmonkey Namonica (xmonkey-namonica) is a Python tool created to facilitate the generation of Open Source Legal Notices, which contain copyright and license information from Open Source packages. The main goal of the tool is to provide a tool for developers to programmatically generate legal notices for the open-source software shipped in their projects, with fewer requirements and no friction.
